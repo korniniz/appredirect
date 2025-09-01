@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Liquid Glass – Minimal + Auto-Hide Controls</title>
+<style>
+  :root{
+    --glass: rgba(255, 255, 255, 0);
+    --glass-border: rgba(255,255,255,.35);
+    --bg-fallback: #0b1020;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg-fallback);font-family:system-ui,Segoe UI,Tahoma,sans-serif}
+  .scene{position:relative;height:100%;overflow:hidden}
+
+  /* BG */
+  .bg{
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    filter: brightness(1);
+    z-index:0;
+  }
+
+  /* Glass */
+  .glass{
+    position:absolute; z-index:2;
+    min-width: 220px; min-height: 120px;
+    width: 520px; height: 260px;
+    left: 80px; top: 100px;
+    border-radius: 20px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.25);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    user-select:none;
+    cursor: move;
+  }
+
+  /* Resize handles — hidden by default */
+  .handle{
+    position:absolute; width:12px;height:12px; background:#fff;
+    border-radius:3px; box-shadow:0 1px 4px rgba(0,0,0,.3);
+    border:1px solid rgba(0,0,0,.15);
+    opacity:0; transition:opacity .12s ease;
+  }
+  .glass:hover .handle{ opacity:.9; }
+
+  .handle.n {top:-6px; left:50%; transform:translateX(-50%); cursor:ns-resize;}
+  .handle.s {bottom:-6px; left:50%; transform:translateX(-50%); cursor:ns-resize;}
+  .handle.e {right:-6px; top:50%; transform:translateY(-50%); cursor:ew-resize;}
+  .handle.w {left:-6px; top:50%; transform:translateY(-50%); cursor:ew-resize;}
+  .handle.nw{left:-6px; top:-6px; cursor:nwse-resize;}
+  .handle.ne{right:-6px; top:-6px; cursor:nesw-resize;}
+  .handle.sw{left:-6px; bottom:-6px; cursor:nesw-resize;}
+  .handle.se{right:-6px; bottom:-6px; cursor:nwse-resize;}
+
+  /* Controls: auto-hide */
+  .controls{
+    position:absolute; top:12px; left:50%; transform:translate(-50%,-6px);
+    z-index:3; display:flex; gap:10px; align-items:center;
+    background:rgba(0,0,0,.45); color:#fff; padding:8px 12px; border-radius:12px;
+    backdrop-filter: blur(10px); font-size:13px;
+    opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease;
+  }
+  /* แสดงเฉพาะตอน hover ทั้งฉาก หรือเมื่อถูกบังคับให้โชว์ด้วยคลาส .show */
+  .scene:hover .controls, .controls.show{
+    opacity:1; pointer-events:auto; transform:translate(-50%,0);
+  }
+  .controls input[type=file]{color:#fff}
+  .controls button{
+    border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:6px 10px;
+    background:rgba(255,255,255,.08); color:#fff; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="scene" id="scene">
+  <div class="bg" id="bg"></div>
+
+  <!-- แผงเพิ่มรูปพื้นหลัง: จะซ่อนเมื่อไม่ hover -->
+  <div class="controls" id="controls">
+    <label>พื้นหลัง: <input type="file" id="bgInput" accept="image/*"></label>
+    <button id="noBlurBtn">ชัด</button>
+    <button id="softBlurBtn">นุ่ม</button>
+  </div>
+
+  <section class="glass" id="glass">
+    <div class="handle n"  data-dir="n"></div>
+    <div class="handle s"  data-dir="s"></div>
+    <div class="handle e"  data-dir="e"></div>
+    <div class="handle w"  data-dir="w"></div>
+    <div class="handle ne" data-dir="ne"></div>
+    <div class="handle nw" data-dir="nw"></div>
+    <div class="handle se" data-dir="se"></div>
+    <div class="handle sw" data-dir="sw"></div>
+  </section>
+</div>
+
+<script>
+/* ------- BG ------- */
+const bgEl = document.getElementById('bg');
+const scene = document.getElementById('scene');
+const controls = document.getElementById('controls');
+
+document.getElementById('bgInput').addEventListener('change', e=>{
+  const f = e.target.files?.[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => bgEl.style.backgroundImage = `url(${ev.target.result})`;
+  r.readAsDataURL(f);
+});
+document.getElementById('noBlurBtn').onclick   = ()=> bgEl.style.filter='brightness(1)';
+document.getElementById('softBlurBtn').onclick = ()=> bgEl.style.filter='blur(6px) brightness(0.98)';
+
+/* รองรับจอสัมผัส: แตะที่ฉากเพื่อแสดง controls ชั่วคราว 3 วิ */
+let hideTimer = null;
+scene.addEventListener('touchstart', ()=>{
+  controls.classList.add('show');
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(()=>controls.classList.remove('show'), 3000);
+}, {passive:true});
+
+/* ------- Drag / Resize ------- */
+const glass = document.getElementById('glass');
+let drag = null, rs = null;
+
+function xy(ev){ return ev.touches?.length ? {x:ev.touches[0].clientX,y:ev.touches[0].clientY} : {x:ev.clientX,y:ev.clientY}; }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+function startDrag(ev){
+  if(ev.target.classList.contains('handle')) return;
+  const {x,y} = xy(ev);
+  const r = glass.getBoundingClientRect();
+  drag = {x0:x, y0:y, left:r.left, top:r.top};
+  ev.preventDefault();
+}
+function onDrag(ev){
+  if(!drag) return;
+  const {x,y} = xy(ev);
+  const dx = x - drag.x0, dy = y - drag.y0;
+  const L = clamp(drag.left + dx, 0, scene.clientWidth  - glass.offsetWidth);
+  const T = clamp(drag.top  + dy,  0, scene.clientHeight - glass.offsetHeight);
+  glass.style.left = L+'px'; glass.style.top  = T+'px';
+}
+function endDrag(){ drag = null; }
+
+glass.addEventListener('mousedown', startDrag);
+glass.addEventListener('touchstart', startDrag, {passive:false});
+window.addEventListener('mousemove', onDrag);
+window.addEventListener('touchmove', onDrag, {passive:false});
+window.addEventListener('mouseup', endDrag);
+window.addEventListener('touchend', endDrag);
+
+function startResize(ev){
+  const dir = ev.target.dataset.dir; if(!dir) return;
+  const {x,y} = xy(ev);
+  const r = glass.getBoundingClientRect();
+  rs = {dir, x0:x, y0:y, r};
+  ev.preventDefault();
+}
+function onResize(ev){
+  if(!rs) return;
+  const {x,y} = xy(ev), dx = x-rs.x0, dy = y-rs.y0;
+  let {left, top, width, height} = rs.r;
+  const minW=220, minH=120;
+
+  if(rs.dir.includes('e')) width  = Math.max(minW, width + dx);
+  if(rs.dir.includes('s')) height = Math.max(minH, height + dy);
+  if(rs.dir.includes('w')){ width = Math.max(minW, width - dx); left = left + (rs.r.width - width); }
+  if(rs.dir.includes('n')){ height= Math.max(minH, height - dy); top  = top  + (rs.r.height- height); }
+
+  left = clamp(left, 0, Math.max(0, scene.clientWidth - width));
+  top  = clamp(top , 0, Math.max(0, scene.clientHeight - height));
+
+  Object.assign(glass.style, { left:left+'px', top:top+'px', width:width+'px', height:height+'px' });
+}
+function endResize(){ rs=null; }
+
+document.querySelectorAll('.handle').forEach(h=>{
+  h.addEventListener('mousedown', startResize);
+  h.addEventListener('touchstart', startResize, {passive:false});
+});
+window.addEventListener('mousemove', onResize);
+window.addEventListener('touchmove', onResize, {passive:false});
+window.addEventListener('mouseup', endResize);
+window.addEventListener('touchend', endResize);
+
+/* Demo BG (เอาออกได้) */
+bgEl.style.backgroundImage = 'url(https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=1920&auto=format&fit=crop)';
+</script>
+</body>
+</html>
