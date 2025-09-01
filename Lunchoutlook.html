@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Launching Desktop App…</title>
+  <style>
+    body { font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; background:#f9fafb; }
+    .box { max-width:480px; padding:20px; background:white; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,.1); text-align:center; }
+    h1 { font-size:1.3rem; margin-bottom:12px; }
+    p { color:#555; margin:6px 0; }
+    a.button { display:inline-block; margin:8px; padding:10px 16px; border-radius:8px; background:#0078d4; color:white; text-decoration:none; }
+    a.button.alt { background:#e5e7eb; color:#111; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Opening your desktop app…</h1>
+    <p>If nothing happens, use one of the buttons below.</p>
+    <p>
+      <a id="tryAgain" class="button">Try Again</a>
+      <a id="webLink" class="button alt" target="_blank">Open in Web</a>
+    </p>
+  </div>
+
+  <script>
+    (function(){
+      const qs = new URLSearchParams(window.location.search);
+      const scheme = qs.get("scheme") || "outlook";   // default: Outlook desktop app
+      const path = qs.get("path") || "";              // e.g. "calendar" or "mail"
+      const payload = qs.get("payload") || "";        // optional query parameters
+      const web = qs.get("web") || "https://outlook.office.com/";
+
+      const deepLink = payload 
+        ? `${scheme}://${path}?${payload}`
+        : `${scheme}://${path}`;
+
+      const status = document.querySelector("h1");
+      const tryAgain = document.getElementById("tryAgain");
+      const webLink = document.getElementById("webLink");
+
+      webLink.href = web;
+      tryAgain.href = deepLink;
+
+      function openApp() {
+        status.textContent = "Trying to open: " + deepLink;
+        // First try direct redirect
+        window.location.href = deepLink;
+
+        // After 1.5s, assume it failed
+        setTimeout(() => {
+          if (!document.hidden) {
+            status.textContent = "Could not auto-open. Please click Try Again or use Web version.";
+          } else {
+            status.textContent = "App opened. You can close this tab.";
+          }
+        }, 1500);
+      }
+
+      // Auto open on load
+      openApp();
+    })();
+  </script>
+</body>
+</html>
