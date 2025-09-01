@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
-  <title>Open Outlook</title>
+  <title>Open Microsoft Teams</title>
   <script>
-    // Build the deep link for Outlook desktop
-    const target = "outlook://Inbox";
-    document.getElementById("fallback").href = target;
-    location.href = target;
+    (function() {
+      // Example: launch Teams main app
+      const target = "msteams://";
+      // Try to open Teams
+      window.location.href = target;
 
-    // fallback if app not installed
-    setTimeout(() => {
-      document.getElementById("msg").style.display = "block";
-    }, 800);
+      // Show fallback message if nothing happens
+      setTimeout(() => {
+        document.getElementById("msg").style.display = "block";
+      }, 800);
+    })();
   </script>
 </head>
 <body>
   <p id="msg" style="display:none">
-    If Outlook didn’t open, <a id="fallback" href="outlook://Inbox">click here</a>.
+    If Teams didn’t open, <a href="https://teams.microsoft.com">open in web</a>.
   </p>
 </body>
 </html>
