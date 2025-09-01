@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Desktop App Launchers</title>
+<style>
+body { font-family: system-ui, sans-serif; margin:0; padding:40px; background:#f9fafb; color:#111; }
+h1 { font-size:1.8rem; margin-bottom:20px; }
+p { color:#555; margin-bottom:24px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; }
+a.card { display:block; background:white; border-radius:12px; padding:20px; text-decoration:none; color:inherit; box-shadow:0 4px 16px rgba(0,0,0,.08); transition:transform .12s ease, box-shadow .12s ease; }
+a.card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.12); }
+a.card h2 { margin:0 0 8px; font-size:1.2rem; color:#0078d4; }
+a.card p { margin:0; font-size:.9rem; color:#555; }
+</style>
+</head>
+<body>
+<h1>Manual Operation Required</h1>
+<p>Select the app you want to open.</p>
+
+<a class="card" href="Lunchoutlook.html?scheme=outlook&path=mail&web=https%3A%2F%2Foutlook.office.com%2Fmail">
+<h2>Outlook</h2>
+<p>Open Outlook desktop directly to Mail. Falls back to Outlook Web.</p>
+</a>
+
+
+<a class="card" href="launcher.html?scheme=teams&path=">
+<h2>Microsoft Teams</h2>
+<p>Launch Microsoft Teams desktop app.</p>
+</a>
+
+
+<a class="card" href="launcher.html?scheme=myapp&path=open&payload=doc%3D123&web=https%3A%2F%2Fcontoso.sharepoint.com%2Fsites%2FDocs%2FDocLib%2F123">
+<h2>Custom App</h2>
+<p>Example: open your custom app with document ID 123.</p>
+</a>
+</div>
+</body>
+</html>
