@@ -1,2 +1,2 @@
 # appredirect.github.io
-from sharepoint jumping to app desktop.
+This luncher is for Sharepoint Quick Link bypass HTTP/HTTPS required To Open Desktop app.
