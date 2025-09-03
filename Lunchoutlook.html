@@ -1,26 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Lunching Outlook</title>
-  <script>
-    (function() {
-      // Example: launch Teams main app
-      const target = "ms-outlook://";
-      // Try to open Teams
-      window.location.href = target;
-
-      // Show fallback message if nothing happens
-      setTimeout(() => {
-        document.getElementById("msg").style.display = "block";
-      }, 800);
-    })();
-  </script>
+  <meta charset="utf-8" />
+  <title>Launching Microsoft Outlook…</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{ --bg:#0b1220; --glass:#ffffff1f; --glass-border:#ffffff3a; --text:#e8eefc; --muted:#b6c2e2; --accent:#7aa2ff; }
+    html,body{height:100%}
+    body{
+      margin:0; display:grid; place-items:center;
+      background: radial-gradient(1200px 800px at 10% 10%, #17213a 0%, transparent 60%),
+                  radial-gradient(900px 600px at 90% 90%, #0e1a33 0%, transparent 55%), var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      color:var(--text);
+    }
+    .glass{
+      width:min(680px, 92vw); padding:28px 26px; border-radius:22px;
+      background:var(--glass); border:1px solid var(--glass-border);
+      box-shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    }
+    h1{margin:0 0 6px; font-size:1.35rem}
+    p{margin:.4rem 0; color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; margin-top:14px}
+    .btn{appearance:none; border:0; cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:600; background:#1a2a4d; color:var(--text)}
+    .btn.secondary{ background:transparent; border:1px solid var(--glass-border) }
+    a{color:var(--accent); text-decoration:none}
+    .small{font-size:.86rem}
+  </style>
 </head>
 <body>
-  <p id="msg" style="display:none">
-    If Outlook didn’t open, <a href="https://teams.microsoft.com">open in web</a>.
-  </p>
+  <div class="glass">
+    <h1>Launching Microsoft Outlook…</h1>
+    <p>Trying to open Outlook desktop. Your browser may ask for permission.</p>
+
+    <div class="row">
+      <button class="btn" id="openAgain">Open again</button>
+      <a class="btn secondary" id="openWeb" href="https://outlook.office.com/mail" target="_blank" rel="noopener">Open on the web</a>
+    </div>
+
+    <p class="small" style="margin-top:10px">
+      If nothing happens, click <strong>Open on the web</strong> or allow your browser to open the desktop app.
+    </p>
+  </div>
+
+  <script>
+    const qs = n => new URL(location.href).searchParams.get(n);
+    const path = (qs("path") || "mail").replace(/[^a-z]/gi,"").toLowerCase(); // basic sanitize
+    const web = qs("web") || "https://outlook.office.com/mail";
+
+    const openWeb = document.getElementById("openWeb");
+    openWeb.href = web;
+
+    function openDesktop(){
+      // Some environments register only one of these:
+      // Try outlook:// first, then ms-outlook:// as a nudge.
+      try { window.location.href = `outlook://${path}`; } catch(e){}
+      setTimeout(() => { try { window.location.href = `ms-outlook://${path}`; } catch(e){} }, 150);
+      // If you want *auto* fallback to web after a delay, uncomment next line:
+      // setTimeout(() => { location.href = web; }, 1400);
+    }
+
+    document.getElementById("openAgain").addEventListener("click", openDesktop);
+    // fire on load
+    openDesktop();
+  </script>
 </body>
 </html>
-
