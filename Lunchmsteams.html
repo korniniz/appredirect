@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Launching Microsoft Teams</title>
+  <script>
+    (function() {
+      // Launch Teams desktop app
+      const target = "msteams://";
+      window.location.href = target;
+
+      // Show fallback message if Teams doesn't open
+      setTimeout(() => {
+        document.getElementById("msg").style.display = "block";
+      }, 800);
+    })();
+  </script>
+</head>
+<body>
+  <p id="msg" style="display:none">
+    If Microsoft Teams didn’t open, 
+    <a href="https://teams.microsoft.com/">click here to open Teams Web</a>.
+  </p>
+</body>
+</html>
