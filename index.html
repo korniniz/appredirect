@@ -15,7 +15,7 @@
       color:var(--text);
     }
     .glass{
-      width:min(720px, 94vw); padding:28px 26px; border-radius:22px;
+      width:min(900px, 95vw); padding:30px; border-radius:22px;
       background:var(--glass); border:1px solid var(--glass-border);
       box-shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
       backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
@@ -39,18 +39,35 @@
     <h1>Desktop App Launchers</h1>
     <p>
       When you click a link below, your browser may show a popup such as:<br/>
-      <em>“This site is trying to open Outlook/Teams”</em>.<br/>
-      Please click <strong>Allow / Open</strong> to launch the desktop app.
+      <em>“This site is trying to open Outlook/Teams/Word/Excel/PowerPoint”</em>.<br/>
+      Please click <strong>Allow / Open</strong> to launch the desktop app.<br/>
+      If the desktop app isn’t available, use the <strong>Open on the web</strong> option on each page.
     </p>
 
     <div class="grid">
       <a class="card" href="Lunchoutlook.html">
-        <h2>Microsoft Outlook</h2>
-        <p>Launch Outlook desktop app (with web fallback).</p>
+        <h2>Outlook – Mail</h2>
+        <p>Launch Outlook desktop (Mail). Fallback to Outlook Web.</p>
+      </a>
+      <a class="card" href="LunchoutlookCalendar.html">
+        <h2>Outlook – Calendar</h2>
+        <p>Launch Outlook desktop (Calendar). Fallback to Outlook Web Month view.</p>
       </a>
       <a class="card" href="Lunchmsteams.html">
         <h2>Microsoft Teams</h2>
-        <p>Launch Teams desktop app (with web fallback).</p>
+        <p>Launch Teams desktop. Fallback to Teams Web.</p>
+      </a>
+      <a class="card" href="Lunchword.html">
+        <h2>Microsoft Word</h2>
+        <p>Launch Word desktop. Fallback to Word Online.</p>
+      </a>
+      <a class="card" href="Lunchexcel.html">
+        <h2>Microsoft Excel</h2>
+        <p>Launch Excel desktop. Fallback to Excel Online.</p>
+      </a>
+      <a class="card" href="Lunchpowerpoint.html">
+        <h2>Microsoft PowerPoint</h2>
+        <p>Launch PowerPoint desktop. Fallback to PowerPoint Online.</p>
       </a>
     </div>
   </div>
