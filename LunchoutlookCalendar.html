@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Launching Outlook Calendar…</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{ --bg:#0b1220; --glass:#ffffff1f; --glass-border:#ffffff3a; --text:#e8eefc; --muted:#b6c2e2; --accent:#7aa2ff; }
+    html,body{height:100%}
+    body{
+      margin:0; display:grid; place-items:center;
+      background:
+        radial-gradient(1200px 800px at 10% 10%, #17213a 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 90%, #0e1a33 0%, transparent 55%),
+        var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      color:var(--text);
+    }
+    .glass{
+      width:min(680px, 92vw); padding:28px 26px; border-radius:22px;
+      background:var(--glass); border:1px solid var(--glass-border);
+      box-shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+    }
+    h1{margin:0 0 6px; font-size:1.35rem}
+    p{margin:.4rem 0; color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; margin-top:14px}
+    .btn{appearance:none; border:0; cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:600; background:#1a2a4d; color:var(--text)}
+    .btn.secondary{ background:transparent; border:1px solid var(--glass-border) }
+    a{color:var(--accent); text-decoration:none}
+    .small{font-size:.86rem}
+  </style>
+</head>
+<body>
+  <div class="glass">
+    <h1>Launching Outlook Calendar…</h1>
+    <p>Trying to open Outlook desktop to the Calendar view. Your browser may ask for permission.</p>
+
+    <div class="row">
+      <button class="btn" id="openAgain">Open again</button>
+      <a class="btn secondary" id="openWeb" href="https://outlook.office.com/calendar/view/week" target="_blank" rel="noopener">Open on the web</a>
+    </div>
+
+    <p class="small" style="margin-top:10px">
+      If nothing happens, click <strong>Open on the web</strong> or allow your browser to open the desktop app.
+    </p>
+  </div>
+
+  <script>
+    // Optional query params:
+    //   ?view=day|workweek|week|month  (web fallback only)
+    //   ?web=<encoded url>            (override web fallback)
+    const qs = n => new URL(location.href).searchParams.get(n);
+
+    const view = (qs("view") || "week").toLowerCase();
+    const viewMap = { day:"day", workweek:"workweek", week:"week", month:"month" };
+    const webDefault = `https://outlook.office.com/calendar/view/${viewMap[view] || "week"}`;
+    const web = qs("web") || webDefault;
+
+    document.getElementById("openWeb").href = web;
+
+    function openDesktop(){
+      // Try both schemes so it works across environments.
+      try { window.location.href = "outlook://calendar"; } catch(e){}
+      setTimeout(() => { try { window.location.href = "ms-outlook://calendar"; } catch(e){} }, 150);
+
+      // If you want automatic web fallback, uncomment:
+      // setTimeout(() => { location.href = web; }, 1400);
+    }
+
+    document.getElementById("openAgain").addEventListener("click", openDesktop);
+    openDesktop();
+  </script>
+</body>
+</html>
