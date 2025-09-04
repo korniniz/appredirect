@@ -45,25 +45,49 @@
   </div>
 
   <script>
-    const qs = n => new URL(location.href).searchParams.get(n);
-    const web = qs("web") || "https://word.office.com/";
-    document.getElementById("openWeb").href = web;
+  const qs = n => new URL(location.href).searchParams.get(n);
 
-    function openDesktop(){
-      const url = qs("url"); // optional: encoded SharePoint/OneDrive file URL
-      if(url){
-        // Open specific file in desktop Word
-        // (ofe|u| tells Office to open the given URL in the desktop app)
-        window.location.href = `ms-word:ofe|u|${url}`;
-      }else{
-        // Open the Word app
-        window.location.href = "ms-word:";
-      }
-      // Optional auto web fallback after delay:
-      // setTimeout(()=>{ location.href = web; }, 1400);
+  // Default web fallback (you can override with ?web=)
+  const web = qs("web") || "https://word.office.com/";
+  document.getElementById("openWeb").href = web;
+
+  // Ensure the file URL is encoded (basic helper)
+  function ensureEncoded(u) {
+    try {
+      // If it's already a valid URL and already encoded enough, keep it.
+      const t = new URL(u);
+      // Rebuild to guarantee encoding of path/query (best effort)
+      return encodeURI(t.href);
+    } catch {
+      // Not a URL → return as-is
+      return u;
     }
-    document.getElementById("openAgain").addEventListener("click", openDesktop);
-    openDesktop();
-  </script>
+  }
+
+  function openDesktop() {
+    const raw = qs("url");
+    const hasFile = raw && raw.trim().length > 0;
+
+    if (hasFile) {
+      // Open a specific SharePoint/OneDrive file in desktop Word
+      const encoded = ensureEncoded(raw.trim());
+      window.location.href = `ms-word:ofe|u|${encoded}`;
+    } else {
+      // Open the Word app (no file) – do NOT call ms-word: without ofe|u|
+      try { window.location.href = "winword:"; } catch(e) {}
+      // Nudge a modern fallback on some builds
+      setTimeout(() => { 
+        try { window.location.href = "ms-officecmd:launch?app=word"; } catch(e) {}
+      }, 150);
+    }
+
+    // Optional: auto web fallback if nothing opens
+    // setTimeout(() => { location.href = web; }, 1400);
+  }
+
+  document.getElementById("openAgain").addEventListener("click", openDesktop);
+  openDesktop();
+</script>
 </body>
+
 </html>
