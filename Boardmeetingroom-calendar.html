@@ -43,8 +43,8 @@
   </div>
 
   <script>
-    // Use your Cloudflare Worker proxy (with DEFAULT_ICS)
-    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
+    // Your Cloudflare Worker root URL (uses DEFAULT_ICS)
+    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynak12955.workers.dev/";
 
     function fmtUpdated(dt = new Date()) {
       return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
@@ -76,19 +76,25 @@
         },
         datesSet: function() { calendar.refetchEvents(); },
         events: function(fetchInfo, success, failure) {
-          fetch(ICS_URL, { mode: 'cors' }).then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.text();
-          }).then(text => {
-            const events = FullCalendar.icalendar.parse(text);
-            updatedEl.textContent = fmtUpdated();
-            document.getElementById('corsNotice').style.display = 'none';
-            success(events);
-          }).catch(err => {
-            console.error('ICS fetch failed', err);
-            document.getElementById('corsNotice').style.display = 'block';
-            failure(err);
-          });
+          // Add cache-buster to Worker URL
+          const url = ICS_URL + "?t=" + Date.now();
+
+          fetch(url, { mode: 'cors' })
+            .then(r => {
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              return r.text();
+            })
+            .then(text => {
+              const events = FullCalendar.icalendar.parse(text);
+              updatedEl.textContent = fmtUpdated();
+              document.getElementById('corsNotice').style.display = 'none';
+              success(events);
+            })
+            .catch(err => {
+              console.error('ICS fetch failed:', err);
+              document.getElementById('corsNotice').style.display = 'block';
+              failure(err);
+            });
         },
       });
 
