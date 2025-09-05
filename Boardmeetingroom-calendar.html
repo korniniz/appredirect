@@ -5,12 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Board Meeting Room – Calendar</title>
   <link rel="stylesheet" href="assets/css/calendar.css" />
-
-  <!-- FullCalendar core + DayGrid + ical.js + iCalendar plugin (GLOBAL builds) -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -21,21 +15,41 @@
 
     <div id="calendar" class="calendar"></div>
     <div id="notice" class="notice" role="alert">
-      ⚠️ We couldn't load the ICS feed. Check the Worker URL or CORS settings.
+      ⚠️ We couldn't load the calendar libraries or the ICS feed.
     </div>
   </div>
 
+  <!-- SELF-HOSTED JS (no CDNs) – order matters -->
+  <script src="assets/js/fullcalendar.index.global.min.js"></script>
+  <script src="assets/js/fullcalendar.daygrid.index.global.min.js"></script>
+  <script src="assets/js/ical.min.js"></script>
+  <script src="assets/js/fullcalendar.icalendar.index.global.min.js"></script>
+
   <script>
+    // Your Cloudflare Worker that serves the room ICS
     const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynak12955.workers.dev/";
 
     function fmtUpdated(dt = new Date()) {
       return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', () => {
       const updatedEl = document.getElementById('updated');
       const noticeEl  = document.getElementById('notice');
       updatedEl.textContent = fmtUpdated();
+
+      // Guard checks to catch missing files quickly
+      if (!window.FullCalendar || !window.dayGridPlugin || !window.icalendarPlugin || !window.ICAL) {
+        console.error('Missing globals:', {
+          FullCalendar: !!window.FullCalendar,
+          dayGridPlugin: !!window.dayGridPlugin,
+          icalendarPlugin: !!window.icalendarPlugin,
+          ICAL: !!window.ICAL
+        });
+        noticeEl.style.display = 'block';
+        noticeEl.textContent = "⚠️ Missing calendar JS files. Check assets/js paths.";
+        return;
+      }
 
       const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         plugins: [dayGridPlugin, icalendarPlugin],
@@ -57,7 +71,7 @@
           url: ICS_URL,
           format: 'ics',
           extraParams: () => ({ t: Date.now() }), // cache-bust
-          failure: (err) => { console.error('ICS load failed:', err); noticeEl.style.display='block'; }
+          failure: (err) => { console.error('ICS load failed:', err); noticeEl.style.display = 'block'; }
         }],
         datesSet: () => calendar.refetchEvents()
       });
@@ -65,7 +79,7 @@
       calendar.render();
       setInterval(() => calendar.refetchEvents(), 60000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
-      calendar.on('eventsSet', () => { updatedEl.textContent = fmtUpdated(); noticeEl.style.display='none'; });
+      calendar.on('eventsSet', () => { updatedEl.textContent = fmtUpdated(); noticeEl.style.display = 'none'; });
     });
   </script>
 </body>
