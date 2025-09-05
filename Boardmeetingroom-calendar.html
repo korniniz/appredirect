@@ -4,40 +4,23 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Board Meeting Room – Calendar</title>
+  <link rel="stylesheet" href="assets/css/calendar.css" />
 
-  <!-- Inline FullCalendar CSS (from index.global.min.css) -->
-  <style>
-    /*! FullCalendar v6.1.15 | (c) 2024 FullCalendar LLC | MIT License */
-    /* ---- keep it short: essential CSS only ---- */
-    .fc { direction:ltr;text-align:left }
-    .fc,.fc table { font-size:1em }
-    .fc table { border-collapse:collapse;border-spacing:0 }
-    .fc th { text-align:center }
-    .fc td,.fc th { border:1px solid #ddd;padding:0;vertical-align:top }
-    .fc .fc-daygrid-day-number { padding:2px 4px;font-size:.85em }
-    .fc .fc-daygrid-day.fc-day-today { background:#fffbcc }
-    .fc .fc-toolbar { display:flex;justify-content:space-between;align-items:center;margin-bottom:1em }
-    .fc .fc-toolbar-title { font-size:1.25em;font-weight:600 }
-    .fc .fc-button { margin:0 .1em;padding:.2em .6em;font-size:.9em;border:1px solid #ccc;background:#eee;cursor:pointer }
-    .fc .fc-button-primary { background:#0e5fa6;color:#fff;border-color:#0e5fa6 }
-    .fc .fc-button-primary:disabled { background:#9ca3af;border-color:#9ca3af }
-    .fc .fc-daygrid-event { background:#3788d8;color:#fff;border-radius:3px;padding:1px 3px;font-size:.8em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
-  </style>
-
-  <!-- FullCalendar scripts -->
-  <script src="https://unpkg.com/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="https://unpkg.com/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-  <script src="https://unpkg.com/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
+  <!-- FullCalendar core + DayGrid + ical.js + iCalendar plugin (GLOBAL builds) -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
-  <div style="max-width:1200px;margin:0 auto;padding:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-weight:700;color:#111827;font-size:18px;">Board Meeting Room – Calendar</div>
-      <div id="updated" style="color:#6b7280;font-size:12px;">Loading…</div>
-    </div>
+  <div class="container">
+    <header class="topbar">
+      <h1 class="title">Board Meeting Room – Calendar</h1>
+      <div id="updated" class="meta">Loading…</div>
+    </header>
 
-    <div id="calendar"></div>
-    <div id="corsNotice" style="display:none;margin-top:10px;color:#b91c1c;font-size:13px;">
+    <div id="calendar" class="calendar"></div>
+    <div id="notice" class="notice" role="alert">
       ⚠️ We couldn't load the ICS feed. Check the Worker URL or CORS settings.
     </div>
   </div>
@@ -51,7 +34,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       const updatedEl = document.getElementById('updated');
-      const noticeEl  = document.getElementById('corsNotice');
+      const noticeEl  = document.getElementById('notice');
       updatedEl.textContent = fmtUpdated();
 
       const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -70,29 +53,19 @@
           const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
           return { html: `<span class="fc-event-time">${timeText}</span><span class="fc-event-title">${titleText}</span>` };
         },
-
         eventSources: [{
           url: ICS_URL,
           format: 'ics',
           extraParams: () => ({ t: Date.now() }), // cache-bust
-          failure: (err) => {
-            console.error('ICS load failed:', err);
-            noticeEl.style.display = 'block';
-          }
+          failure: (err) => { console.error('ICS load failed:', err); noticeEl.style.display='block'; }
         }],
-
         datesSet: () => calendar.refetchEvents()
       });
 
       calendar.render();
-
       setInterval(() => calendar.refetchEvents(), 60000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
-
-      calendar.on('eventsSet', () => {
-        updatedEl.textContent = fmtUpdated();
-        noticeEl.style.display = 'none';
-      });
+      calendar.on('eventsSet', () => { updatedEl.textContent = fmtUpdated(); noticeEl.style.display='none'; });
     });
   </script>
 </body>
