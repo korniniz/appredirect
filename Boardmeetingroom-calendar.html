@@ -42,66 +42,61 @@
     </div>
   </div>
 
-  <script>
-    // Your Cloudflare Worker root URL (uses DEFAULT_ICS)
-    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
+<script>
+  const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
 
-    function fmtUpdated(dt = new Date()) {
-      return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
-    }
+  function fmtUpdated(dt = new Date()) {
+    return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
+  }
 
-    document.addEventListener('DOMContentLoaded', function () {
-      const updatedEl = document.getElementById('updated');
-      updatedEl.textContent = fmtUpdated();
+  document.addEventListener('DOMContentLoaded', function () {
+    const updatedEl = document.getElementById('updated');
+    updatedEl.textContent = fmtUpdated();
 
-      const calendarEl = document.getElementById('calendar');
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        height: 'auto',
-        expandRows: true,
-        timeZone: 'Asia/Bangkok',
-        headerToolbar: {
-          left: 'prev today next',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
-        displayEventTime: true,
-        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-        eventDisplay: 'block',
-        eventContent: function(arg) {
-          const timeText = arg.timeText || '';
-          const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
-          return { html: `<span class='fc-event-time'>${timeText}</span><span class='fc-event-title'>${titleText}</span>` };
-        },
-        datesSet: function() { calendar.refetchEvents(); },
-        events: function(fetchInfo, success, failure) {
-          // Add cache-buster to Worker URL
-          const url = ICS_URL + "?t=" + Date.now();
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      height: 'auto',
+      expandRows: true,
+      timeZone: 'Asia/Bangkok',
+      headerToolbar: { left: 'prev today next', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+      buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
+      displayEventTime: true,
+      eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+      eventDisplay: 'block',
+      eventContent: (arg) => {
+        const timeText = arg.timeText || '';
+        const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
+        return { html: `<span class='fc-event-time'>${timeText}</span><span class='fc-event-title'>${titleText}</span>` };
+      },
 
-          fetch(url, { mode: 'cors' })
-            .then(r => {
-              if (!r.ok) throw new Error('HTTP ' + r.status);
-              return r.text();
-            })
-            .then(text => {
-              const events = FullCalendar.icalendar.parse(text);
-              updatedEl.textContent = fmtUpdated();
-              document.getElementById('corsNotice').style.display = 'none';
-              success(events);
-            })
-            .catch(err => {
-              console.error('ICS fetch failed:', err);
-              document.getElementById('corsNotice').style.display = 'block';
-              failure(err);
-            });
-        },
-      });
+      datesSet: () => calendar.refetchEvents(),
 
-      calendar.render();
-      setInterval(() => calendar.refetchEvents(), 60000); // auto-refresh every 60s
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
+      // ---------- ONLY THIS PART CHANGED ----------
+      events: (fetchInfo, success, failure) => {
+        const url = ICS_URL + (ICS_URL.includes('?') ? '&' : '?') + 't=' + Date.now(); // cache-bust
+        fetch(url, { mode: 'cors' })
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+          .then(text => {
+            const parsed = FullCalendar.icalendar.parse(text);   // returns { events, timeZone }
+            const evs = parsed?.events || [];                    // <-- use parsed.events
+            updatedEl.textContent = fmtUpdated();
+            document.getElementById('corsNotice').style.display = 'none';
+            success(evs);
+          })
+          .catch(err => {
+            console.error('ICS fetch/parse failed:', err);
+            document.getElementById('corsNotice').style.display = 'block';
+            failure(err);
+          });
+      },
+      // -------------------------------------------
     });
-  </script>
+
+    calendar.render();
+    setInterval(() => calendar.refetchEvents(), 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
+  });
+</script>
 </body>
 </html>
