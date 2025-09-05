@@ -6,28 +6,28 @@
   <title>Board Meeting Room Calendar</title>
   <meta name="description" content="Real-time calendar for Board Meeting Room" />
   <style>
-    :root { --brand: #0e5fa6; --bg: #ffffff; --muted: #6b7280; }
-    html, body { height: 100%; margin: 0; background: var(--bg);
-                 font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 12px; }
+    :root { --brand:#0e5fa6; --bg:#ffffff; --muted:#6b7280; }
+    html,body { height:100%; margin:0; background:var(--bg);
+                font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .container { max-width:1200px; margin:0 auto; padding:12px; }
     .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
     .title { font-weight:700; color:#111827; font-size:18px; }
-    .meta { color: var(--muted); font-size:12px; }
+    .meta { color:var(--muted); font-size:12px; }
     #calendar { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; }
-    .fc .fc-toolbar.fc-header-toolbar { padding: 8px 12px; }
+    .fc .fc-toolbar.fc-header-toolbar { padding:8px 12px; }
     .fc .fc-toolbar-title { font-size:16px; font-weight:700; }
-    .fc .fc-button-primary { background: var(--brand); border-color: var(--brand); }
+    .fc .fc-button-primary { background:var(--brand); border-color:var(--brand); }
     .fc .fc-button-primary:disabled { background:#9ca3af; border-color:#9ca3af; }
-    .fc .fc-daygrid-event { padding: 2px 4px; border-radius: 6px; }
-    .fc .fc-event-time { font-weight: 600; margin-right: 4px; }
-    .fc .fc-event-title { font-weight: 500; }
+    .fc .fc-daygrid-event { padding:2px 4px; border-radius:6px; }
+    .fc .fc-event-time { font-weight:600; margin-right:4px; }
+    .fc .fc-event-title { font-weight:500; }
     .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
   </style>
 
   <!-- FullCalendar (global builds) -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
+  <link href="https://unpkg.com/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="https://unpkg.com/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -42,61 +42,67 @@
     </div>
   </div>
 
-<script>
-  const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
+  <script>
+    // Cloudflare Worker (serves your DEFAULT_ICS)
+    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynak12955.workers.dev/";
 
-  function fmtUpdated(dt = new Date()) {
-    return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
-  }
+    function fmtUpdated(dt = new Date()) {
+      return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
+    }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    const updatedEl = document.getElementById('updated');
-    updatedEl.textContent = fmtUpdated();
+    document.addEventListener('DOMContentLoaded', function () {
+      const updatedEl = document.getElementById('updated');
+      const noticeEl  = document.getElementById('corsNotice');
+      updatedEl.textContent = fmtUpdated();
 
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      height: 'auto',
-      expandRows: true,
-      timeZone: 'Asia/Bangkok',
-      headerToolbar: { left: 'prev today next', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-      buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
-      displayEventTime: true,
-      eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-      eventDisplay: 'block',
-      eventContent: (arg) => {
-        const timeText = arg.timeText || '';
-        const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
-        return { html: `<span class='fc-event-time'>${timeText}</span><span class='fc-event-title'>${titleText}</span>` };
-      },
+      const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        plugins: [ FullCalendar.icalendarPlugin ],
+        initialView: 'dayGridMonth',
+        timeZone: 'Asia/Bangkok',
+        height: 'auto',
+        expandRows: true,
+        headerToolbar: { left: 'prev today next', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+        buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
+        displayEventTime: true,
+        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+        eventDisplay: 'block',
+        eventContent: (arg) => {
+          const timeText  = arg.timeText || '';
+          const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
+          return { html: `<span class="fc-event-time">${timeText}</span><span class="fc-event-title">${titleText}</span>` };
+        },
 
-      datesSet: () => calendar.refetchEvents(),
+        // Let the plugin fetch + parse the ICS for us
+        eventSources: [{
+          url: ICS_URL,
+          format: 'ics',
+          // Cache-bust each request so you always see fresh data
+          extraParams: () => ({ t: Date.now() }),
+          failure: (err) => {
+            console.error('ICS load failed:', err);
+            noticeEl.style.display = 'block';
+          }
+        }],
 
-      // ---------- ONLY THIS PART CHANGED ----------
-      events: (fetchInfo, success, failure) => {
-        const url = ICS_URL + (ICS_URL.includes('?') ? '&' : '?') + 't=' + Date.now(); // cache-bust
-        fetch(url, { mode: 'cors' })
-          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-          .then(text => {
-            const parsed = FullCalendar.icalendar.parse(text);   // returns { events, timeZone }
-            const evs = parsed?.events || [];                    // <-- use parsed.events
-            updatedEl.textContent = fmtUpdated();
-            document.getElementById('corsNotice').style.display = 'none';
-            success(evs);
-          })
-          .catch(err => {
-            console.error('ICS fetch/parse failed:', err);
-            document.getElementById('corsNotice').style.display = 'block';
-            failure(err);
-          });
-      },
-      // -------------------------------------------
+        datesSet: () => {
+          // Whenever the user changes month/week/day, refresh the ICS
+          calendar.refetchEvents();
+        }
+      });
+
+      calendar.render();
+
+      // Auto-refresh every 60s
+      setInterval(() => calendar.refetchEvents(), 60000);
+      // Refresh when tab becomes visible
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
+
+      // Hide notice on first successful fetch
+      calendar.on('eventsSet', () => {
+        updatedEl.textContent = fmtUpdated();
+        noticeEl.style.display = 'none';
+      });
     });
-
-    calendar.render();
-    setInterval(() => calendar.refetchEvents(), 60000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
-  });
-</script>
+  </script>
 </body>
 </html>
