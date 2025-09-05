@@ -1,0 +1,54 @@
+/* Custom site styles + minimal FullCalendar adjustments */
+:root {
+  --brand: #0e5fa6;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --bg: #ffffff;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.container { max-width: 1200px; margin: 0 auto; padding: 12px; }
+.topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+.title { font-weight: 700; color: #111827; font-size: 18px; margin: 0; }
+.meta { color: var(--muted); font-size: 12px; }
+
+.calendar {
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  min-height:420px;
+}
+
+/* ---- Lightweight FullCalendar look (works without external CSS) ---- */
+.fc { direction:ltr; text-align:left; }
+.fc, .fc table { font-size: 1em; }
+.fc table { border-collapse: collapse; border-spacing: 0; width: 100%; }
+.fc th { text-align: center; font-weight: 600; }
+.fc td, .fc th { border: 1px solid #ddd; padding: 0; vertical-align: top; }
+
+.fc .fc-toolbar { display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; }
+.fc .fc-toolbar-title { font-size: 16px; font-weight: 700; }
+.fc .fc-button { margin: 0 .1em; padding: .25em .6em; font-size: .9em; border:1px solid #ccc; background:#eee; cursor:pointer; }
+.fc .fc-button-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.fc .fc-button-primary:disabled { background:#9ca3af; border-color:#9ca3af; }
+
+.fc .fc-daygrid-day-number { padding: 2px 4px; font-size: .85em; }
+.fc .fc-daygrid-day.fc-day-today { background: #fffbcc; }
+.fc .fc-daygrid-event {
+  background:#3788d8;
+  color:#fff;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: .8em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
