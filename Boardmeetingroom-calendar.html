@@ -41,16 +41,16 @@
 
       // Guard checks to catch missing files quickly
       if (!window.FullCalendar || !window.dayGridPlugin || !window.icalendarPlugin || !window.ICAL) {
-        console.error('Missing globals:', {
-          FullCalendar: !!window.FullCalendar,
-          dayGridPlugin: !!window.dayGridPlugin,
-          icalendarPlugin: !!window.icalendarPlugin,
-          ICAL: !!window.ICAL
-        });
-        noticeEl.style.display = 'block';
-        noticeEl.textContent = "⚠️ Missing calendar JS files. Check assets/js paths.";
-        return;
-      }
+      console.error('Missing globals:', {
+          FullCalendar:      !!window.FullCalendar,
+          dayGridPlugin:     !!window.dayGridPlugin,
+          icalendarPlugin:   !!(window.icalendarPlugin || (window.FullCalendar && FullCalendar.icalendarPlugin)),
+          ICAL:              !!window.ICAL
+      });
+  noticeEl.style.display = 'block';
+  noticeEl.textContent = '⚠️ Missing calendar JS files. Check assets/js paths.';
+  return;
+}
 
       const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         plugins: [dayGridPlugin, icalendarPlugin],
