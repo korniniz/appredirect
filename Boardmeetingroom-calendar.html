@@ -1,34 +1,57 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Board Meeting Room – Calendar</title>
-  <link rel="stylesheet" href="assets/css/calendar.css" />
+  <title>Board Meeting Room — Calendar</title>
+
+  <!-- FullCalendar CSS -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+
+  <style>
+    :root { --brand: #0e5fa6; --muted:#6b7280; }
+    html,body { height:100%; margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:#fff; }
+    .wrap { max-width:1200px; margin:0 auto; padding:12px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .title { font-weight:700; font-size:18px; color:#111827; }
+    .meta { color:var(--muted); font-size:12px; }
+
+    #calendar { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; }
+    .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
+
+    /* minor FullCalendar tweaks */
+    .fc .fc-toolbar-title { font-size:16px; font-weight:700; }
+    .fc .fc-button-primary { background:var(--brand); border-color:var(--brand); }
+    .fc .fc-button-primary:disabled { background:#9ca3af; border-color:#9ca3af; }
+    .fc .fc-daygrid-event { padding:2px 4px; border-radius:6px; }
+    .fc .fc-event-time { font-weight:600; margin-right:4px; }
+    .fc .fc-event-title { font-weight:500; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header class="topbar">
-      <h1 class="title">Board Meeting Room – Calendar</h1>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">Board Meeting Room — Calendar</div>
       <div id="updated" class="meta">Loading…</div>
-    </header>
-
-    <div id="calendar" class="calendar"></div>
-    <div id="notice" class="notice" role="alert">
-      ⚠️ We couldn't load the calendar libraries or the ICS feed.
     </div>
+
+    <div id="calendar"></div>
+    <div id="notice" class="notice">⚠️ We couldn't load the calendar libraries or the ICS feed.</div>
   </div>
 
-  <!-- SELF-HOSTED JS (no CDNs) – order matters -->
+  <!-- JS (order matters) -->
+  <!-- 1) FullCalendar core -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <!-- 2) DayGrid plugin -->
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-  <script src="https://unpkg.com/ical.js@1.5.0/build/ical.min.js"></script>
+  <!-- 3) ICAL.js (provides window.ICAL) -->
+  <script src="https://unpkg.com/ical.js@1.0.1/build/ical.min.js"></script>
+  <!-- 4) iCalendar plugin for FullCalendar -->
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
 
-
   <script>
-    // Your Cloudflare Worker that serves the room ICS
+    // Your Cloudflare Worker (serves the ICS with relaxed CORS)
     const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynak12955.workers.dev/";
 
     function fmtUpdated(dt = new Date()) {
@@ -40,18 +63,18 @@
       const noticeEl  = document.getElementById('notice');
       updatedEl.textContent = fmtUpdated();
 
-      // Guard checks to catch missing files quickly
+      // Guard: ensure all required globals are loaded
       if (!window.FullCalendar || !window.dayGridPlugin || !window.icalendarPlugin || !window.ICAL) {
-      console.error('Missing globals:', {
-          FullCalendar:      !!window.FullCalendar,
-          dayGridPlugin:     !!window.dayGridPlugin,
-          icalendarPlugin:   !!(window.icalendarPlugin || (window.FullCalendar && FullCalendar.icalendarPlugin)),
-          ICAL:              !!window.ICAL
-      });
-  noticeEl.style.display = 'block';
-  noticeEl.textContent = '⚠️ Missing calendar JS files. Check assets/js paths.';
-  return;
-}
+        console.error('Missing globals:', {
+          FullCalendar:    !!window.FullCalendar,
+          dayGridPlugin:   !!window.dayGridPlugin,
+          icalendarPlugin: !!window.icalendarPlugin,
+          ICAL:            !!window.ICAL
+        });
+        noticeEl.style.display = 'block';
+        noticeEl.textContent = '⚠️ Missing calendar JS files. Check script includes/paths.';
+        return;
+      }
 
       const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         plugins: [dayGridPlugin, icalendarPlugin],
@@ -59,29 +82,51 @@
         timeZone: 'Asia/Bangkok',
         height: 'auto',
         expandRows: true,
-        headerToolbar: { left: 'prev today next', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-        buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
+        headerToolbar: {
+          left: 'prev today next',
+          center: 'title',
+          right: 'dayGridMonth' // keep simple; add timeGrid plugin if you want week/day views
+        },
+        buttonText: { today: 'Today', month: 'Month' },
         displayEventTime: true,
         eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
         eventDisplay: 'block',
-        eventContent: (arg) => {
+        eventContent(arg) {
           const timeText  = arg.timeText || '';
-          const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
+          const titleText = (arg.event.title && arg.event.title.trim()) ? arg.event.title : 'Busy';
           return { html: `<span class="fc-event-time">${timeText}</span><span class="fc-event-title">${titleText}</span>` };
         },
+
+        // Let FullCalendar’s iCalendar plugin fetch & parse the ICS for you
         eventSources: [{
           url: ICS_URL,
           format: 'ics',
           extraParams: () => ({ t: Date.now() }), // cache-bust
-          failure: (err) => { console.error('ICS load failed:', err); noticeEl.style.display = 'block'; }
+          failure: (err) => {
+            console.error('ICS load failed:', err);
+            noticeEl.style.display = 'block';
+            noticeEl.textContent = '⚠️ Couldn’t load the ICS feed. Verify your Worker URL/CORS.';
+          }
         }],
-        datesSet: () => calendar.refetchEvents()
+
+        // nudge a refresh when the visible range changes
+        datesSet() {
+          calendar.refetchEvents();
+        }
       });
 
       calendar.render();
+
+      // Auto-refresh every 60s, and when tab regains focus
       setInterval(() => calendar.refetchEvents(), 60000);
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
-      calendar.on('eventsSet', () => { updatedEl.textContent = fmtUpdated(); noticeEl.style.display = 'none'; });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) calendar.refetchEvents();
+      });
+
+      calendar.on('eventsSet', () => {
+        updatedEl.textContent = fmtUpdated();
+        noticeEl.style.display = 'none';
+      });
     });
   </script>
 </body>
