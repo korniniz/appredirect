@@ -1,133 +1,14 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Board Meeting Room — Calendar</title>
+<iframe src="https://outlook.office365.com/owa/calendar/69c5579b85b74de2819dae208a47d381@ngowhock.co.th/4f55884a00d94dc0ae7d097143591c392274714890804555220/calendar.html"
+        style="width:100%; height:800px; border:none;"
+        id="roomcal"></iframe>
 
-  <!-- FullCalendar CSS -->
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
-
-  <style>
-    :root { --brand: #0e5fa6; --muted:#6b7280; }
-    html,body { height:100%; margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:#fff; }
-    .wrap { max-width:1200px; margin:0 auto; padding:12px; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-    .title { font-weight:700; font-size:18px; color:#111827; }
-    .meta { color:var(--muted); font-size:12px; }
-
-    #calendar { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; }
-    .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
-
-    /* minor FullCalendar tweaks */
-    .fc .fc-toolbar-title { font-size:16px; font-weight:700; }
-    .fc .fc-button-primary { background:var(--brand); border-color:var(--brand); }
-    .fc .fc-button-primary:disabled { background:#9ca3af; border-color:#9ca3af; }
-    .fc .fc-daygrid-event { padding:2px 4px; border-radius:6px; }
-    .fc .fc-event-time { font-weight:600; margin-right:4px; }
-    .fc .fc-event-title { font-weight:500; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="title">Board Meeting Room — Calendar</div>
-      <div id="updated" class="meta">Loading…</div>
-    </div>
-
-    <div id="calendar"></div>
-    <div id="notice" class="notice">⚠️ We couldn't load the calendar libraries or the ICS feed.</div>
-  </div>
-
-  <!-- JS (order matters) -->
-  <!-- 1) FullCalendar core -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <!-- 2) DayGrid plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-  <!-- 3) ICAL.js (provides window.ICAL) -->
-  <script src="https://unpkg.com/ical.js@1.0.1/build/ical.min.js"></script>
-  <!-- 4) iCalendar plugin for FullCalendar -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
-
-  <script>
-    // Your Cloudflare Worker (serves the ICS with relaxed CORS)
-    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynak12955.workers.dev/";
-
-    function fmtUpdated(dt = new Date()) {
-      return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const updatedEl = document.getElementById('updated');
-      const noticeEl  = document.getElementById('notice');
-      updatedEl.textContent = fmtUpdated();
-
-      // Guard: ensure all required globals are loaded
-      if (!window.FullCalendar || !window.dayGridPlugin || !window.icalendarPlugin || !window.ICAL) {
-        console.error('Missing globals:', {
-          FullCalendar:    !!window.FullCalendar,
-          dayGridPlugin:   !!window.dayGridPlugin,
-          icalendarPlugin: !!window.icalendarPlugin,
-          ICAL:            !!window.ICAL
-        });
-        noticeEl.style.display = 'block';
-        noticeEl.textContent = '⚠️ Missing calendar JS files. Check script includes/paths.';
-        return;
-      }
-
-      const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        plugins: [dayGridPlugin, icalendarPlugin],
-        initialView: 'dayGridMonth',
-        timeZone: 'Asia/Bangkok',
-        height: 'auto',
-        expandRows: true,
-        headerToolbar: {
-          left: 'prev today next',
-          center: 'title',
-          right: 'dayGridMonth' // keep simple; add timeGrid plugin if you want week/day views
-        },
-        buttonText: { today: 'Today', month: 'Month' },
-        displayEventTime: true,
-        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-        eventDisplay: 'block',
-        eventContent(arg) {
-          const timeText  = arg.timeText || '';
-          const titleText = (arg.event.title && arg.event.title.trim()) ? arg.event.title : 'Busy';
-          return { html: `<span class="fc-event-time">${timeText}</span><span class="fc-event-title">${titleText}</span>` };
-        },
-
-        // Let FullCalendar’s iCalendar plugin fetch & parse the ICS for you
-        eventSources: [{
-          url: ICS_URL,
-          format: 'ics',
-          extraParams: () => ({ t: Date.now() }), // cache-bust
-          failure: (err) => {
-            console.error('ICS load failed:', err);
-            noticeEl.style.display = 'block';
-            noticeEl.textContent = '⚠️ Couldn’t load the ICS feed. Verify your Worker URL/CORS.';
-          }
-        }],
-
-        // nudge a refresh when the visible range changes
-        datesSet() {
-          calendar.refetchEvents();
-        }
-      });
-
-      calendar.render();
-
-      // Auto-refresh every 60s, and when tab regains focus
-      setInterval(() => calendar.refetchEvents(), 60000);
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) calendar.refetchEvents();
-      });
-
-      calendar.on('eventsSet', () => {
-        updatedEl.textContent = fmtUpdated();
-        noticeEl.style.display = 'none';
-      });
-    });
-  </script>
-</body>
-</html>
+<script>
+  document.getElementById("roomcal").onload = function() {
+    let iframeDoc = document.getElementById("roomcal").contentWindow.document;
+    // Example: try to hide left and right panels
+    let leftPanel = iframeDoc.querySelector('[role="navigation"]');
+    if (leftPanel) leftPanel.style.display = "none";
+    let rightPanel = iframeDoc.querySelector('[role="complementary"]');
+    if (rightPanel) rightPanel.style.display = "none";
+  };
+</script>
