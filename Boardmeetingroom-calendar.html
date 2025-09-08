@@ -2,42 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Room Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Board Meeting Room Calendar</title>
+  <meta name="description" content="Real-time calendar for Board Meeting Room" />
   <style>
-    html, body { height:100%; margin:0; }
-    #calendar { max-width: 1200px; margin: 0 auto; padding: 8px; }
+    :root { --brand: #0e5fa6; --bg: #ffffff; --muted: #6b7280; }
+    html, body { height: 100%; margin: 0; background: var(--bg);
+                 font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 12px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .title { font-weight:700; color:#111827; font-size:18px; }
+    .meta { color: var(--muted); font-size:12px; }
+    #calendar { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; }
+    .fc .fc-toolbar.fc-header-toolbar { padding: 8px 12px; }
+    .fc .fc-toolbar-title { font-size:16px; font-weight:700; }
+    .fc .fc-button-primary { background: var(--brand); border-color: var(--brand); }
+    .fc .fc-button-primary:disabled { background:#9ca3af; border-color:#9ca3af; }
+    .fc .fc-daygrid-event { padding: 2px 4px; border-radius: 6px; }
+    .fc .fc-event-time { font-weight: 600; margin-right: 4px; }
+    .fc .fc-event-title { font-weight: 500; }
+    .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
   </style>
-  <!-- FullCalendar (month view + iCal plugin) -->
-  <link  href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+
+  <!-- FullCalendar (global builds) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
-  <div id="calendar"></div>
+  <div class="container">
+    <div class="topbar">
+      <div class="title">Board Meeting Room – Calendar</div>
+      <div class="meta"><span id="updated">Loading…</span></div>
+    </div>
+
+    <div id="calendar"></div>
+    <div id="corsNotice" class="notice">
+      ⚠️ We couldn't load the ICS feed. Check the Worker URL or CORS settings.
+    </div>
+  </div>
 
   <script>
+    // Use your Cloudflare Worker proxy URL (no ?u= needed if you set DEFAULT_ICS in Worker)
+    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
+
+    function fmtUpdated(dt = new Date()) {
+      return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+      const updatedEl = document.getElementById('updated');
+      updatedEl.textContent = fmtUpdated();
+
       const calendarEl = document.getElementById('calendar');
       const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',          // month grid only
+        initialView: 'dayGridMonth',
         height: 'auto',
         expandRows: true,
-        headerToolbar: {                      // hide left & right toolbars
-          left: '',
+        timeZone: 'Asia/Bangkok',
+        headerToolbar: {
+          left: 'prev today next',
           center: 'title',
-          right: ''
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
+        buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
         displayEventTime: true,
-        eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
+        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
         eventDisplay: 'block',
-        // ICS feed (published, public)
-        events: {
-          url: 'https://outlook.office365.com/owa/calendar/69c5579b85b74de2819dae208a47d381@ngowhock.co.th/4f55884a00d94dc0ae7d097143591c392274714890804555220/calendar.ics',
-          format: 'ics'
-        }
+        eventContent: function(arg) {
+          const timeText = arg.timeText || '';
+          const titleText = (arg.event.title && arg.event.title.trim().length > 0) ? arg.event.title : 'Busy';
+          return { html: `<span class='fc-event-time'>${timeText}</span><span class='fc-event-title'>${titleText}</span>` };
+        },
+        datesSet: function() { calendar.refetchEvents(); },
+        events: function(fetchInfo, success, failure) {
+          fetch(ICS_URL, { mode: 'cors' }).then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          }).then(text => {
+            const events = FullCalendar.icalendar.parse(text);
+            updatedEl.textContent = fmtUpdated();
+            document.getElementById('corsNotice').style.display = 'none';
+            success(events);
+          }).catch(err => {
+            console.error('ICS fetch failed', err);
+            document.getElementById('corsNotice').style.display = 'block';
+            failure(err);
+          });
+        },
       });
+
       calendar.render();
+      setInterval(() => calendar.refetchEvents(), 60000); // auto-refresh every 60s
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) calendar.refetchEvents(); });
     });
   </script>
 </body>
