@@ -93,13 +93,10 @@
         },
 
         eventSources: [{
-          url: EVENTS_URL,
-          format: 'ics',
-          extraParams: () => ({ t: Date.now() }), // cache-bust
-          failure: (err) => {
-            console.error('ICS load failed:', err);
-            noticeEl.style.display = 'block';
-          }
+        url: "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/",
+        format: "ics",
+        extraParams: () => ({ t: Date.now() }), // cache-bust, avoids conditional requests
+        failure: (err) => { /* show notice */ }
         }],
 
         datesSet: () => calendar.refetchEvents()
