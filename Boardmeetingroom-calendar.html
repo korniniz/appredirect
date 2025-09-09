@@ -4,57 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Board Meeting Room — Calendar</title>
-  <meta name="description" content="Live room bookings from Outlook resource calendar">
 
   <!-- FullCalendar CSS (global build) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/fullcalendar@6.1.15/index.global.min.css">
 
   <style>
-    :root { --brand:#0e5fa6; --muted:#6b7280; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 12px; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-    .title { font-weight:700; color:#111827; font-size:18px; }
-    .meta { color:var(--muted); font-size:12px; }
-    #calendar { background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
-    .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
+    :root { --brand:#0e5fa6; --muted:#6b7280; --line:#e5e7eb; }
+    html,body { height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:#fff; }
+    .wrap { max-width:1200px; margin:0 auto; padding:14px; }
+    .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .title { font-weight:700; font-size:18px; color:#111827; }
+    .meta { font-size:12px; color:var(--muted); }
+    #calendar { background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+
+    /* Make event text compact and readable */
+    .fc .fc-daygrid-event, .fc .fc-timegrid-event {
+      border-radius:6px; padding:2px 4px; font-size:12px;
+    }
     .fc .fc-button-primary { background:var(--brand); border-color:var(--brand); }
-    .fc .fc-button-primary:disabled { background:#9ca3af; border-color:#9ca3af; }
+    .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
   </style>
 
-  <!-- FullCalendar core + plugins (GLOBAL builds) -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
+  <!-- FullCalendar JS (global builds) – order matters -->
+  <script src="https://unpkg.com/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="https://unpkg.com/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+  <script src="https://unpkg.com/@fullcalendar/timegrid@6.1.15/index.global.min.js"></script>
 
-  <!-- ical.js (required by the iCalendar plugin) -->
+  <!-- ICAL.js (parser) + FullCalendar iCalendar plugin -->
   <script src="https://unpkg.com/ical.js@1.5.0/build/ical.min.js"></script>
-
-  <!-- FullCalendar iCalendar plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
+  <script src="https://unpkg.com/@fullcalendar/icalendar@6.1.15/index.global.min.js"></script>
 </head>
 <body>
   <div class="wrap">
-    <div class="topbar">
+    <div class="top">
       <div class="title">Board Meeting Room — Calendar</div>
-      <div class="meta" id="updated">Loading…</div>
+      <div id="updated" class="meta">Loading…</div>
     </div>
 
     <div id="calendar"></div>
-    <div id="notice" class="notice">⚠️ We couldn’t load the ICS feed. Check the Worker URL or CORS proxy.</div>
+    <div id="notice" class="notice">⚠️ We couldn’t load the ICS feed. Check the Worker URL or CORS settings.</div>
   </div>
 
   <script>
-    // Cloudflare Worker that serves the ICS with CORS
-    const WORKER_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
+    // 1) Your Cloudflare Worker URL that proxies the Outlook ICS
+    //    (This must return 200 with CORS: * and Content-Type: text/calendar)
+    const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
 
-    // If you prefer to pass the Outlook ICS explicitly:
-    // const OUTLOOK_ICS = "https://outlook.office365.com/owa/calendar/.../calendar.ics";
-    // const EVENTS_URL = WORKER_URL + "?u=" + encodeURIComponent(OUTLOOK_ICS);
-
-    // Using DEFAULT_ICS from the worker:
-    const EVENTS_URL = WORKER_URL;
-
+    // Helper for the 'Updated …' label
     function fmtUpdated(dt = new Date()) {
       return 'Updated ' + dt.toLocaleString('en-GB', { hour12: false });
     }
@@ -62,61 +58,67 @@
     document.addEventListener('DOMContentLoaded', () => {
       const updatedEl = document.getElementById('updated');
       const noticeEl  = document.getElementById('notice');
+      updatedEl.textContent = fmtUpdated();
+
+      // Guard: make sure the globals are present (helps diagnose 404s / wrong paths)
+      if (!window.FullCalendar || !window.dayGridPlugin || !window.timeGridPlugin || !window.icalendarPlugin || !window.ICAL) {
+        console.error('Missing calendar globals:', {
+          FullCalendar: !!window.FullCalendar,
+          dayGridPlugin: !!window.dayGridPlugin,
+          timeGridPlugin: !!window.timeGridPlugin,
+          icalendarPlugin: !!window.icalendarPlugin,
+          ICAL: !!window.ICAL
+        });
+        noticeEl.style.display = 'block';
+        noticeEl.textContent = '⚠️ Missing calendar JS files. Check your script paths.';
+        return;
+      }
 
       const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        plugins: [ dayGridPlugin, timeGridPlugin, icalendarPlugin ],
+        plugins: [dayGridPlugin, timeGridPlugin, icalendarPlugin],
         initialView: 'dayGridMonth',
+        timeZone: 'Asia/Bangkok',
         height: 'auto',
         expandRows: true,
-        timeZone: 'Asia/Bangkok',
 
         headerToolbar: {
           left: 'prev today next',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
+        buttonText: { today:'Today', month:'Month', week:'Week', day:'Day' },
 
-        buttonText: { today: 'Today', month: 'Month', week: 'Week', day: 'Day' },
-
-        // TimeGrid options (optional, tweak as needed)
-        slotMinTime: '07:00:00',
-        slotMaxTime: '21:00:00',
-        slotDuration: '00:30:00',
-        nowIndicator: true,
-
+        // Show times and make them 24h
+        displayEventTime: true,
         eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-        eventDisplay: 'block',
-        eventContent: (arg) => {
-          const time = arg.timeText || '';
-          const title = (arg.event.title && arg.event.title.trim()) ? arg.event.title : 'Busy';
-          return { html: `<span class="fc-event-time">${time}</span> <span class="fc-event-title">${title}</span>` };
-        },
 
+        // Let FullCalendar fetch & parse ICS for you
         eventSources: [{
-        url: "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/",
-        format: "ics",
-        extraParams: () => ({ t: Date.now() }), // cache-bust, avoids conditional requests
-        failure: (err) => { /* show notice */ }
+          url: ICS_URL,
+          format: 'ics',
+          extraParams: () => ({ t: Date.now() }),   // cache-bust
+          failure: (err) => {
+            console.error('ICS load failed:', err);
+            noticeEl.style.display = 'block';
+          }
         }],
 
-        datesSet: () => calendar.refetchEvents()
-      });
+        // Keep it fresh
+        datesSet: () => calendar.refetchEvents(),
 
-      calendar.render();
-      updatedEl.textContent = fmtUpdated();
-
-      setInterval(() => {
-        calendar.refetchEvents();
-        updatedEl.textContent = fmtUpdated();
-        noticeEl.style.display = 'none';
-      }, 60000);
-
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          calendar.refetchEvents();
+        // When events are loaded, hide the notice and update the timestamp
+        eventsSet: () => {
           updatedEl.textContent = fmtUpdated();
           noticeEl.style.display = 'none';
         }
+      });
+
+      calendar.render();
+
+      // Auto refresh every 60s and on tab focus
+      setInterval(() => calendar.refetchEvents(), 60000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) calendar.refetchEvents();
       });
     });
   </script>
