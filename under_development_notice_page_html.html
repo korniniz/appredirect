@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Under Development</title>
+  <style>
+    :root {
+      --bg: #0f172a;        /* slate-900 */
+      --card: #111827;      /* gray-900 */
+      --fg: #e5e7eb;        /* gray-200 */
+      --muted: #94a3b8;     /* slate-400 */
+      --accent: #22d3ee;    /* cyan-400 */
+      --accent-2: #38bdf8;  /* sky-400 */
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;      /* slate-50 */
+        --card: #ffffff;
+        --fg: #0f172a;      /* slate-900 */
+        --muted: #475569;   /* slate-600 */
+        --accent: #0891b2;  /* cyan-700 */
+        --accent-2: #0284c7; /* sky-700 */
+      }
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 70% -10%, rgba(34,211,238,.15), transparent 60%),
+                  radial-gradient(900px 500px at -10% 40%, rgba(56,189,248,.12), transparent 60%),
+                  var(--bg);
+      color: var(--fg);
+      display: grid;
+      place-items: center;
+    }
+
+    .card {
+      width: min(760px, 92vw);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      padding: 28px 28px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--accent);
+      font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 12px;
+      padding: 8px 12px; border-radius: 999px;
+      background: rgba(34,211,238,.12);
+      border: 1px solid rgba(34,211,238,.35);
+    }
+
+    h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 14px 0 8px; }
+    p  { margin: 0; color: var(--muted); font-size: clamp(14px, 2.2vw, 16px); }
+
+    .hero {
+      margin: 22px auto 8px;
+      width: min(420px, 70vw);
+      aspect-ratio: 4 / 3;
+      display: grid; place-items: center;
+    }
+
+    /* Simple floating animation */
+    .floaty { animation: floaty 4.6s ease-in-out infinite; }
+    @keyframes floaty { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } }
+
+    .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: var(--fg); text-decoration: none; font-weight: 600;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .2s ease;
+      cursor: pointer;
+    }
+    .btn:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+    .btn.primary { border-color: rgba(56,189,248,.5); color: white; background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
+
+    .meta { margin-top: 16px; font-size: 12px; color: var(--muted); }
+
+    /* Decorative glow */
+    .glow {
+      position: absolute; inset: -40% -50% auto auto; width: 480px; height: 480px; border-radius: 999px;
+      background: radial-gradient(circle at 50% 50%, rgba(56,189,248,.18), transparent 60%);
+      filter: blur(8px); pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <div class="glow" aria-hidden="true"></div>
+
+    <span class="badge" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/>
+      </svg>
+      Notice
+    </span>
+
+    <h1 id="title">Sorry, this page is still under development</h1>
+    <p>It will be available soon. Thanks for your patience!</p>
+
+    <!-- Inline SVG cartoon illustration -->
+    <div class="hero" aria-hidden="true">
+      <svg class="floaty" viewBox="0 0 512 384" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="illusTitle illusDesc">
+        <title id="illusTitle">Under Construction Cartoon</title>
+        <desc id="illusDesc">A friendly robot with tools indicating the page is being built.</desc>
+        <!-- Ground shadow -->
+        <ellipse cx="256" cy="320" rx="160" ry="22" fill="rgba(0,0,0,.18)"/>
+
+        <!-- Robot body -->
+        <rect x="180" y="110" rx="18" ry="18" width="152" height="120" fill="#0ea5e9" opacity="0.95"/>
+        <rect x="196" y="128" rx="10" ry="10" width="120" height="84" fill="#e2e8f0"/>
+        <!-- Eyes -->
+        <circle cx="230" cy="160" r="10" fill="#0f172a"/>
+        <circle cx="282" cy="160" r="10" fill="#0f172a"/>
+        <rect x="236" y="182" width="40" height="6" rx="3" fill="#0f172a" opacity=".6"/>
+        <!-- Antenna -->
+        <line x1="256" y1="110" x2="256" y2="80" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="256" cy="72" r="8" fill="#22d3ee"/>
+
+        <!-- Arms -->
+        <rect x="330" y="148" width="60" height="14" rx="7" fill="#94a3b8"/>
+        <rect x="122" y="148" width="60" height="14" rx="7" fill="#94a3b8"/>
+        <!-- Wrench -->
+        <path d="M378 156c10-8 24-5 30 6 7 12 3 27-9 34l-36 22-20-33 35-21z" fill="#1f2937"/>
+
+        <!-- Toolbox -->
+        <rect x="120" y="240" width="92" height="48" rx="10" fill="#f59e0b"/>
+        <rect x="120" y="232" width="92" height="14" rx="6" fill="#d97706"/>
+        <rect x="132" y="252" width="24" height="18" rx="3" fill="#78350f"/>
+        <rect x="164" y="252" width="24" height="18" rx="3" fill="#78350f"/>
+
+        <!-- Cones -->
+        <path d="M392 244l-18 44h36l-18-44z" fill="#fb923c"/>
+        <rect x="368" y="288" width="48" height="10" rx="5" fill="#fed7aa"/>
+        <path d="M392 244l-10 24h20l-10-24z" fill="#fff" opacity=".7"/>
+      </svg>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" onclick="location.href='/'" aria-label="Go to home page">Go to Home</button>
+      <button class="btn" onclick="history.back()" aria-label="Go back">Go Back</button>
+    </div>
+
+    <div class="meta">Need a Thai version? Replace the heading with: “ขออภัย หน้านี้ยังอยู่ระหว่างการพัฒนา จะพร้อมใช้งานในเร็ว ๆ นี้”</div>
+  </main>
+</body>
+</html>
