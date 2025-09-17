@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Clipboard → PNG Downloader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b1020; --fg:#e8ecf1; --muted:#94a3b8; --accent:#60a5fa; }
+    html,body { margin:0; height:100%; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--fg); }
+    .wrap { max-width:900px; margin:0 auto; padding:28px 16px 48px; }
+    h1 { margin:0 0 6px; font-size: clamp(22px, 3vw, 30px); }
+    p.lead { margin:4px 0 18px; color:var(--muted); }
+    .panel {
+      border:1px dashed #334155; border-radius:16px; padding:18px; background:#0f172a;
+      display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    }
+    .hint { font-size:14px; color:var(--muted); }
+    .btn {
+      border:1px solid #334155; background:#111827; color:var(--fg);
+      padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600;
+    }
+    .btn:hover { border-color:#475569; }
+    .previews { margin-top:18px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
+    .card { background:#0b1222; border:1px solid #1f2a44; border-radius:14px; padding:12px; }
+    .thumb { width:100%; aspect-ratio: 4 / 3; object-fit:contain; background:#0a0f1d; border-radius:10px; }
+    .meta { display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:12px; color:var(--muted);}
+    .dl {
+      margin-top:8px; width:100%; padding:8px 10px; border-radius:8px; border:1px solid #334155; background:#101827; color:var(--fg); cursor:pointer; font-weight:600;
+    }
+    .dl:hover { border-color:#475569; }
+    .drop {
+      margin-top:14px; padding:12px; border-radius:10px; border:1px dashed #334155; color:#9aa7bd; text-align:center; background:#0b1222;
+    }
+    .kbd { padding:2px 6px; border:1px solid #334155; border-bottom-width:2px; border-radius:6px; background:#0b1222; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    footer { margin-top:28px; font-size:12px; color:#7b8aa6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Clipboard → PNG Downloader</h1>
+    <p class="lead">Paste an image (<span class="kbd">Ctrl/⌘+V</span>) or use the button. Each image is converted to PNG and downloaded automatically.</p>
+
+    <div class="panel">
+      <div class="hint">
+        <div>• Click the page, then press <span class="kbd">Ctrl/⌘+V</span> to paste an image.</div>
+        <div>• Or click <b>Paste from Clipboard</b> (requires a secure context &amp; browser support).</div>
+      </div>
+      <button class="btn" id="pasteBtn">📋 Paste from Clipboard</button>
+    </div>
+
+    <div id="drop" class="drop">Optional: Drag & drop image files here (JPEG/PNG/WebP/HEIC*)</div>
+
+    <div id="previews" class="previews" aria-live="polite"></div>
+
+    <footer>
+      Tips:
+      • Some browsers only allow <b>navigator.clipboard.read()</b> over HTTPS or localhost.
+      • If the button is blocked, use <span class="kbd">Ctrl/⌘+V</span> after clicking the page.
+      • *HEIC support depends on your browser/OS. Files are converted when the browser can decode them.
+    </footer>
+  </div>
+
+  <script>
+    // Utility: timestamp-based filename
+    function tsName(index = 1) {
+      const d = new Date();
+      const pad = (n, s=2) => String(n).padStart(s,'0');
+      const name = `clipboard-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}-${index}.png`;
+      return name;
+    }
+
+    // Convert a Blob image to PNG Blob via canvas
+    async function convertToPngBlob(imageBlob) {
+      // Prefer ImageBitmap for performance if available
+      let bmp;
+      try {
+        bmp = await createImageBitmap(imageBlob);
+      } catch {
+        // Fallback to HTMLImageElement
+        const url = URL.createObjectURL(imageBlob);
+        try {
+          const img = await new Promise((res, rej) => {
+            const el = new Image();
+            el.onload = () => res(el);
+            el.onerror = rej;
+            el.src = url;
+          });
+          // draw via canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      }
+
+      // draw ImageBitmap to canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bmp, 0, 0);
+      return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    // Trigger download from a Blob
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Create a preview card
+    async function makePreviewCard(srcBlob, index) {
+      const url = URL.createObjectURL(srcBlob);
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.src = url;
+      img.alt = 'Pasted image preview';
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+
+      const sizeKB = (srcBlob.size / 1024).toFixed(1);
+      const left = document.createElement('div');
+      left.textContent = `${srcBlob.type || 'image'} • ${sizeKB} KB`;
+
+      const right = document.createElement('div');
+      right.textContent = `#${index}`;
+
+      meta.append(left, right);
+
+      const btn = document.createElement('button');
+      btn.className = 'dl';
+      const fname = tsName(index);
+      btn.textContent = `⬇ Download as ${fname}`;
+      btn.addEventListener('click', async () => {
+        const png = await convertToPngBlob(srcBlob);
+        downloadBlob(png, fname);
+      });
+
+      card.append(img, meta, btn);
+      card.addEventListener('transitionend', () => URL.revokeObjectURL(url), { once: true });
+
+      return card;
+    }
+
+    // Process blobs → preview + auto-download
+    async function processImageBlobs(blobs) {
+      const container = document.getElementById('previews');
+      let i = 1;
+      for (const blob of blobs) {
+        const card = await makePreviewCard(blob, i);
+        container.prepend(card);
+        // Auto-download PNG immediately
+        const png = await convertToPngBlob(blob);
+        downloadBlob(png, tsName(i));
+        i++;
+      }
+    }
+
+    // Handle paste event (Ctrl/⌘+V)
+    window.addEventListener('paste', async (e) => {
+      const items = e.clipboardData?.items || [];
+      const images = [];
+      for (const it of items) {
+        if (it.type && it.type.startsWith('image/')) {
+          const blob = it.getAsFile();
+          if (blob) images.push(blob);
+        }
+      }
+      if (images.length) {
+        e.preventDefault(); // avoid pasting into focused inputs
+        await processImageBlobs(images);
+      }
+    });
+
+    // Button: navigator.clipboard.read()
+    document.getElementById('pasteBtn').addEventListener('click', async () => {
+      if (!('clipboard' in navigator) || !('read' in navigator.clipboard)) {
+        alert('Your browser blocks programmatic clipboard read. Try pressing Ctrl/⌘+V after clicking the page.');
+        return;
+      }
+      try {
+        const items = await navigator.clipboard.read();
+        const images = [];
+        for (const item of items) {
+          const type = item.types.find(t => t.startsWith('image/'));
+          if (type) {
+            const blob = await item.getType(type);
+            images.push(blob);
+          }
+        }
+        if (images.length) {
+          await processImageBlobs(images);
+        } else {
+          alert('No image found in clipboard. Copy an image first, then try again.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Could not read from clipboard. This usually requires HTTPS and a user gesture.');
+      }
+    });
+
+    // Optional: drag & drop image files
+    const drop = document.getElementById('drop');
+    ;['dragenter','dragover','dragleave','drop'].forEach(ev => {
+      drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    drop.addEventListener('dragover', () => drop.style.borderColor = '#475569');
+    drop.addEventListener('dragleave', () => drop.style.borderColor = '#334155');
+    drop.addEventListener('drop', async (e) => {
+      drop.style.borderColor = '#334155';
+      const files = [...(e.dataTransfer?.files || [])].filter(f => f.type.startsWith('image/'));
+      if (files.length) await processImageBlobs(files);
+    });
+  </script>
+</body>
+</html>
