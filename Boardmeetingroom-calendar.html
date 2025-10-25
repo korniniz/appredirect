@@ -140,7 +140,7 @@
           // Tooltip shows the time only
           tag.title = timeSpan(st, en, isAllDay);
           // Pill shows time + " Busy"
-          tag.textContent = `${timeSpan(st, en, isAllDay)} Busy`;
+          tag.textContent = `${timeSpan(st, en, isAllDay)} Reserved`;
           cell.appendChild(tag);
         });
         if (events.length > 3) {
