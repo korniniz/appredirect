@@ -96,6 +96,21 @@
     return d.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
   }
 
+  // Day bounds + clamping for multi-day events
+  function dayBounds(d){
+    const s = new Date(d); s.setHours(0,0,0,0);
+    const e = new Date(d); e.setHours(23,59,59,999);
+    return { s, e };
+  }
+
+  function spanForDay(ev, day){
+    const { s, e } = dayBounds(day);
+    // Clamp multi-day events to the visible part of this day
+    const start = ev.allDay ? s : new Date(Math.max(ev.start.getTime(), s.getTime()));
+    const end   = ev.allDay ? e : new Date(Math.min(ev.end.getTime(),   e.getTime()));
+    return { start, end, isAllDay: ev.allDay };
+  }
+
   // Build month grid
   function renderMonth() {
     $('#monthLabel').textContent = monthLabel(current);
@@ -141,10 +156,13 @@
         // events that start or occur on this day
         const events = eventsOnDay(day);
         events.slice(0,3).forEach(ev => {
+          const { start:st, end:en, isAllDay } = spanForDay(ev, day);
           const tag = document.createElement('div');
           tag.className = 'ev';
-          tag.title = ev.title;
-          tag.textContent = ev.title;
+          // Tooltip keeps full context
+          tag.title = `${timeSpan(st, en, isAllDay)} — ${ev.title || 'Busy'}`;
+          // Pill shows ONLY the time range (or "All day")
+          tag.textContent = timeSpan(st, en, isAllDay);
           cell.appendChild(tag);
         });
         if (events.length > 3) {
@@ -193,6 +211,7 @@
 
         const time = document.createElement('span');
         time.className = 'time';
+        // In the day view we still show time + title
         time.textContent = timeSpan(ev.start, ev.end, ev.allDay);
 
         const text = document.createElement('span');
@@ -290,4 +309,3 @@
 </script>
 </body>
 </html>
-   
