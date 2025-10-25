@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Board Meeting Room FL.8 — Calendar</title>
 
-  <!-- ical.js: self-hosted -->
+  <!-- ical.js -->
   <script src="https://unpkg.com/ical.js@1.5.0/build/ical.min.js"></script>
 
-  <!-- Minimal inline styles (no external CSS files) -->
   <style>
     html,body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 12px; }
@@ -28,11 +27,6 @@
     .today { outline:2px solid #0ea5e9; outline-offset:-2px; }
     .ev { margin-top:4px; padding:2px 4px; border-radius:4px; background:#0e5fa6; color:#fff; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .notice { display:none; margin-top:10px; color:#b91c1c; font-size:13px; }
-    .panel { margin-top:12px; border:1px solid #e5e7eb; border-radius:10px; padding:10px; }
-    .panel h3 { margin:0 0 8px; font-size:14px; }
-    .event { padding:6px 8px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:6px; }
-    .time { font-weight:600; margin-right:6px; }
-    .empty { color:#6b7280; font-size:13px; }
   </style>
 </head>
 <body>
@@ -54,22 +48,16 @@
   </div>
 
   <div id="notice" class="notice"></div>
-
-  <div id="dayPanel" class="panel" hidden>
-    <h3 id="dayTitle"></h3>
-    <div id="dayEvents"></div>
-  </div>
 </div>
 
 <script>
   // --- CONFIG ---
-  // Your Cloudflare Worker that proxies Outlook ICS (must return text/calendar + CORS *)
   const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
   const TZ = 'Asia/Bangkok';
 
   // --- STATE ---
-  let allEvents = [];  // normalized events
-  let current = new Date(); // month navigation state (local)
+  let allEvents = [];
+  let current = new Date();
   current.setDate(1);
 
   // Helpers
@@ -78,34 +66,24 @@
   const sameDay = (a,b) =>
     a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
-  function toLocal(d) {
-    // d is a JS Date in UTC or local; ensure local time for display
-    return new Date(d.getTime());
-  }
-
+  function toLocal(d){ return new Date(d.getTime()); }
   function zero(n){ return n < 10 ? '0'+n : ''+n; }
-
   function timeSpan(start, end, isAllDay) {
     if (isAllDay) return 'All day';
     const s = `${zero(start.getHours())}:${zero(start.getMinutes())}`;
     const e = `${zero(end.getHours())}:${zero(end.getMinutes())}`;
     return s + ' – ' + e;
   }
+  function monthLabel(d){ return d.toLocaleDateString('en-GB', { month:'long', year:'numeric' }); }
 
-  function monthLabel(d) {
-    return d.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
-  }
-
-  // Day bounds + clamping for multi-day events
+  // Clamp multi-day events to visible part of a day
   function dayBounds(d){
     const s = new Date(d); s.setHours(0,0,0,0);
     const e = new Date(d); e.setHours(23,59,59,999);
     return { s, e };
   }
-
   function spanForDay(ev, day){
     const { s, e } = dayBounds(day);
-    // Clamp multi-day events to the visible part of this day
     const start = ev.allDay ? s : new Date(Math.max(ev.start.getTime(), s.getTime()));
     const end   = ev.allDay ? e : new Date(Math.min(ev.end.getTime(),   e.getTime()));
     return { start, end, isAllDay: ev.allDay };
@@ -128,10 +106,10 @@
     });
     grid.appendChild(dow);
 
-    const first = new Date(current); // first of month
+    const first = new Date(current);
     const firstDow = first.getDay();
     const start = new Date(first);
-    start.setDate(first.getDate() - firstDow); // start from Sunday of the week
+    start.setDate(first.getDate() - firstDow);
 
     const today = new Date();
 
@@ -159,10 +137,10 @@
           const { start:st, end:en, isAllDay } = spanForDay(ev, day);
           const tag = document.createElement('div');
           tag.className = 'ev';
-          // Tooltip keeps full context
-          tag.title = `${timeSpan(st, en, isAllDay)} — ${ev.title || 'Busy'}`;
-          // Pill shows ONLY the time range (or "All day")
-          tag.textContent = timeSpan(st, en, isAllDay);
+          // Tooltip shows the time only
+          tag.title = timeSpan(st, en, isAllDay);
+          // Pill shows time + " Busy"
+          tag.textContent = `${timeSpan(st, en, isAllDay)} Busy`;
           cell.appendChild(tag);
         });
         if (events.length > 3) {
@@ -172,8 +150,7 @@
           cell.appendChild(more);
         }
 
-        // click -> open day agenda
-        cell.addEventListener('click', () => openDay(day));
+        // No click handler (day panel removed)
         week.appendChild(cell);
       }
       grid.appendChild(week);
@@ -181,48 +158,9 @@
   }
 
   function eventsOnDay(day) {
-    // return events where any part is on 'day'
     const startOf = new Date(day); startOf.setHours(0,0,0,0);
     const endOf   = new Date(day); endOf.setHours(23,59,59,999);
-
     return allEvents.filter(ev => !(ev.end < startOf || ev.start > endOf));
-  }
-
-  function openDay(day) {
-    const panel = $('#dayPanel');
-    const list = $('#dayEvents');
-    const title = $('#dayTitle');
-
-    title.textContent = day.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-    const items = eventsOnDay(day)
-      .sort((a,b) => a.start - b.start);
-
-    list.innerHTML = '';
-    if (!items.length) {
-      const p = document.createElement('div');
-      p.className = 'empty';
-      p.textContent = 'No events';
-      list.appendChild(p);
-    } else {
-      for (const ev of items) {
-        const row = document.createElement('div');
-        row.className = 'event';
-
-        const time = document.createElement('span');
-        time.className = 'time';
-        // In the day view we still show time + title
-        time.textContent = timeSpan(ev.start, ev.end, ev.allDay);
-
-        const text = document.createElement('span');
-        text.textContent = ev.title || 'Busy';
-
-        row.appendChild(time);
-        row.appendChild(text);
-        list.appendChild(row);
-      }
-    }
-    panel.hidden = false;
   }
 
   // ICS -> events[]
@@ -230,20 +168,15 @@
     const jcal = ICAL.parse(text);
     const comp = new ICAL.Component(jcal);
     const vevents = comp.getAllSubcomponents('vevent') || [];
-
     const events = [];
 
     for (const v of vevents) {
       const ev = new ICAL.Event(v);
-      // Build occurrences (handles RRULE / EXDATE)
       if (ev.isRecurring()) {
         const it = ev.iterator();
         let next;
-        // limit expansion: +/- 1 year from now
-        const limitStart = new Date();
-        limitStart.setFullYear(limitStart.getFullYear() - 1);
-        const limitEnd = new Date();
-        limitEnd.setFullYear(limitEnd.getFullYear() + 1);
+        const limitStart = new Date(); limitStart.setFullYear(limitStart.getFullYear() - 1);
+        const limitEnd = new Date();   limitEnd.setFullYear(limitEnd.getFullYear() + 1);
 
         while ((next = it.next())) {
           const jsStart = next.toJSDate();
@@ -276,7 +209,6 @@
 
     try {
       updatedEl.textContent = 'Loading…';
-      // cache-buster
       const url = ICS_URL + (ICS_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
       const res = await fetch(url, { mode:'cors' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -289,8 +221,8 @@
       noticeEl.style.display = 'none';
     } catch (err) {
       console.error('ICS load failed:', err);
-      $('#notice').textContent = '⚠️ Could not load ICS from the Worker. See console.';
-      $('#notice').style.display = 'block';
+      noticeEl.textContent = '⚠️ Could not load ICS from the Worker. See console.';
+      noticeEl.style.display = 'block';
       updatedEl.textContent = fmtUpdated(new Date());
     }
   }
@@ -303,7 +235,7 @@
   // Initial load + periodic refresh
   document.addEventListener('DOMContentLoaded', () => {
     loadIcs();
-    setInterval(loadIcs, 60000); // auto-refresh every 60s
+    setInterval(loadIcs, 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) loadIcs(); });
   });
 </script>
