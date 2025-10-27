@@ -56,7 +56,7 @@
       // Some environments register only one of these:
       // Try outlook:// first, then ms-outlook:// as a nudge.
       try { window.location.href = `nhc-outlook://${path}`; } catch(e){}
-      setTimeout(() => { try { window.location.href = `ms-outlook://${path}`; } catch(e){} }, 150);
+      //setTimeout(() => { try { window.location.href = `ms-outlook://${path}`; } catch(e){} }, 150);
       // If you want *auto* fallback to web after a delay, uncomment next line:
       // setTimeout(() => { location.href = web; }, 1400);
     }
@@ -67,4 +67,5 @@
   </script>
 </body>
 </html>
+
 
