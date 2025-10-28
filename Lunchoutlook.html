@@ -32,40 +32,62 @@
 <body>
   <div class="glass">
     <h1>Launching Microsoft Outlook…</h1>
-    <p>Trying to open Outlook desktop. Your browser may ask for permission.</p>
+    <p>Click the button to open Outlook desktop. Your browser may ask for permission once.</p>
 
     <div class="row">
-      <button class="btn" id="openAgain">Open again</button>
+      <button class="btn" id="openOutlook">Open Outlook</button>
       <a class="btn secondary" id="openWeb" href="https://outlook.office.com/mail" target="_blank" rel="noopener">Open on the web</a>
     </div>
 
     <p class="small" style="margin-top:10px">
-      If nothing happens, click <strong>Open on the web</strong> or allow your browser to open the desktop app.
+      If nothing happens, click <strong>Open on the web</strong>.
     </p>
   </div>
 
   <script>
+    // --- Config via querystring if you like ---
     const qs = n => new URL(location.href).searchParams.get(n);
-    const path = (qs("path") || "mail").replace(/[^a-z]/gi,"").toLowerCase(); // basic sanitize
     const web = qs("web") || "https://outlook.office.com/mail";
 
-    const openWeb = document.getElementById("openWeb");
-    openWeb.href = web;
+    document.getElementById("openWeb").href = web;
 
-    function openDesktop(){
-      // Some environments register only one of these:
-      // Try outlook:// first, then ms-outlook:// as a nudge.
-      try { window.location.href = `nhc-outlook://${path}`; } catch(e){}
-      //setTimeout(() => { try { window.location.href = `ms-outlook://${path}`; } catch(e){} }, 150);
-      // If you want *auto* fallback to web after a delay, uncomment next line:
-      // setTimeout(() => { location.href = web; }, 1400);
-    }
+    // Avoid double-launch: run only once per click
+    let inFlight = false;
 
-    document.getElementById("openAgain").addEventListener("click", openDesktop);
-    // fire on load
-    openDesktop();
+    // If the page loses visibility right after invoking the protocol,
+    // assume launch succeeded and cancel the web fallback.
+    let launched = false;
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") launched = true;
+    });
+
+    document.getElementById("openOutlook").addEventListener("click", () => {
+      if (inFlight) return;
+      inFlight = true;
+
+      try {
+        // 1) Windows default mail handler (usually Outlook classic) — no Outlook warning
+        // Using a harmless compose intent to bring the app to foreground.
+        location.href = "mailto:?subject=&body=";
+      } catch(e) {}
+
+      // 2) Optional nudge: try Outlook-specific handler on machines that register it
+      // Comment out if you want mailto: only.
+      setTimeout(() => {
+        try { location.href = "ms-outlook:"; } catch(e) {}
+      }, 250);
+
+      // 3) Fallback to OWA if nothing launched
+      setTimeout(() => {
+        if (!launched) location.href = web;
+      }, 1500);
+
+      // Allow another attempt after a short period (in case user canceled)
+      setTimeout(() => { inFlight = false; }, 2500);
+    });
   </script>
 </body>
 </html>
+
 
 
