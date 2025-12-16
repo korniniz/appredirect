@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unexpected Error</title>
+
+  <style>
+    :root {
+      --fg: #1f2937;
+      --muted: #6b7280;
+      --accent: #ef4444;
+      --card-bg: rgba(255, 255, 255, 0.55);
+      --card-border: rgba(255, 255, 255, 0.35);
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+      /* Full pastel gradient background */
+      background:
+        radial-gradient(1200px 600px at 15% 10%, #fde2e4, transparent 60%),
+        radial-gradient(1000px 500px at 85% 20%, #e0f2fe, transparent 60%),
+        radial-gradient(900px 500px at 50% 85%, #f0fdf4, transparent 60%),
+        linear-gradient(135deg, #fdf2f8, #eef2ff);
+
+      color: var(--fg);
+      display: grid;
+      place-items: center;
+    }
+
+    .card {
+      width: min(760px, 92vw);
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+      padding: 32px 32px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    h1 {
+      font-size: clamp(26px, 3.6vw, 36px);
+      margin: 16px 0 10px;
+    }
+
+    p {
+      margin: 0;
+      font-size: clamp(15px, 2.4vw, 17px);
+      color: var(--muted);
+    }
+
+    .hero {
+      margin: 26px auto 10px;
+      width: min(420px, 72vw);
+      aspect-ratio: 4 / 3;
+      display: grid;
+      place-items: center;
+    }
+
+    .floaty {
+      animation: floaty 4.8s ease-in-out infinite;
+    }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .meta {
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .glow {
+      position: absolute;
+      inset: -40% -50% auto auto;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.18), transparent 65%);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <div class="glow" aria-hidden="true"></div>
+
+    <span class="badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/>
+      </svg>
+      Unexpected Error
+    </span>
+
+    <h1 id="title">Unexpected Error on our end</h1>
+    <p>Please visit again in a few minutes. We’re working to fix the issue asap.</p>
+
+    <div class="hero" aria-hidden="true">
+      <svg class="floaty" viewBox="0 0 512 384" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="256" cy="320" rx="160" ry="22" fill="rgba(0,0,0,.15)"/>
+
+        <rect x="180" y="110" rx="18" ry="18" width="152" height="120" fill="#f87171"/>
+        <rect x="196" y="128" rx="10" ry="10" width="120" height="84" fill="#fee2e2"/>
+
+        <circle cx="230" cy="160" r="10" fill="#7f1d1d"/>
+        <circle cx="282" cy="160" r="10" fill="#7f1d1d"/>
+        <rect x="236" y="182" width="40" height="6" rx="3" fill="#7f1d1d"/>
+
+        <line x1="256" y1="110" x2="256" y2="80" stroke="#fb7185" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="256" cy="72" r="8" fill="#fecaca"/>
+      </svg>
+    </div>
+
+    <div class="meta">
+      “ขออภัยระบบเกิดข้อผิดพลาด กรุณาเข้ามาใหม่อีกครั้งในอีกสักครู่”
+    </div>
+  </main>
+</body>
+</html>
