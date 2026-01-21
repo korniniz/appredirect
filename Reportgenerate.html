@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Board Meeting Room FL.8</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ical.js -->
+<script src="https://unpkg.com/ical.js@1.5.0/build/ical.min.js"></script>
+
+<!-- xlsx -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:rgba(255,255,255,.86);
+  --border:rgba(0,0,0,.06);
+  --text:#1c1c1e;
+  --muted:#6b7280;
+  --blue:#007aff;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+  color:var(--text);
+}
+.wrap{max-width:1200px;margin:auto;padding:20px}
+
+/* ===== Header ===== */
+.topbar{
+  background:var(--card);
+  backdrop-filter:blur(18px);
+  border-radius:var(--radius);
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+}
+.title{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.month{font-size:14px;color:var(--muted)}
+.spacer{flex:1}
+
+/* ===== Buttons ===== */
+.btn{
+  appearance:none;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.6);
+  border-radius:12px;
+  padding:8px 14px;
+  font-size:13px;
+  cursor:pointer;
+  transition:.25s ease;
+}
+.btn:hover{background:#fff;transform:translateY(-1px)}
+.btn.primary{
+  background:var(--blue);
+  color:#fff;
+  border:none;
+}
+.btn.icon{padding:8px 10px}
+
+/* ===== Calendar ===== */
+.grid{
+  margin-top:20px;
+  background:var(--card);
+  backdrop-filter:blur(16px);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+}
+.dow,.week{display:grid;grid-template-columns:repeat(7,1fr)}
+.dow div{
+  padding:14px 0;
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+  color:var(--muted);
+  border-bottom:1px solid var(--border);
+}
+.cell{
+  min-height:130px;
+  padding:10px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  transition:.2s;
+}
+.cell:last-child{border-right:0}
+.cell:hover{background:rgba(0,122,255,.04)}
+.out{opacity:.35}
+.today{background:rgba(0,122,255,.1)}
+.date{font-size:12px;color:var(--muted);margin-bottom:6px}
+
+/* ===== Event pill ===== */
+.ev{
+  margin-top:6px;
+  padding:6px 10px;
+  border-radius:10px;
+  font-size:12px;
+  background:linear-gradient(135deg,#0a84ff,#007aff);
+  color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:0 4px 10px rgba(0,122,255,.35);
+}
+
+/* ===== Footer ===== */
+.meta{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--muted);
+  text-align:right;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <div class="title">Board Meeting Room FL.8</div>
+      <div class="month" id="monthLabel"></div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button class="btn icon" id="prev">◀</button>
+    <button class="btn" id="today">Today</button>
+    <button class="btn icon" id="next">▶</button>
+
+    <button class="btn primary" onclick="exportExcel('day')">Export Day</button>
+    <button class="btn primary" onclick="exportExcel('month')">Export Month</button>
+    <button class="btn primary" onclick="exportExcel('year')">Export Year</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="meta" id="updated">Loading…</div>
+
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const ICS_URL = "https://checking-boardmeetr8-nhc.korrakieadkeynkak12955.workers.dev/";
+/* ========================================= */
+
+let allEvents=[];
+let current=new Date(current=new Date(),current.setDate(1));
+
+const $=s=>document.querySelector(s);
+const sameDay=(a,b)=>a.toDateString()===b.toDateString();
+const zero=n=>n<10?'0'+n:n;
+const timeSpan=(s,e,all)=>all?'All day':`${zero(s.getHours())}:${zero(s.getMinutes())}–${zero(e.getHours())}:${zero(e.getMinutes())}`;
+
+/* ===== Render Calendar ===== */
+function renderMonth(){
+  $('#monthLabel').textContent=current.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  const grid=$('#grid');
+  grid.innerHTML='';
+
+  const dow=document.createElement('div');
+  dow.className='dow';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
+    const div=document.createElement('div');div.textContent=d;dow.appendChild(div);
+  });
+  grid.appendChild(dow);
+
+  const start=new Date(current);
+  start.setDate(1-start.getDay());
+  const today=new Date();
+
+  for(let w=0;w<6;w++){
+    const week=document.createElement('div');
+    week.className='week';
+
+    for(let d=0;d<7;d++){
+      const day=new Date(start);
+      day.setDate(start.getDate()+w*7+d);
+
+      const cell=document.createElement('div');
+      cell.className='cell'+
+        (day.getMonth()!==current.getMonth()?' out':'')+
+        (sameDay(day,today)?' today':'');
+
+      const date=document.createElement('div');
+      date.className='date';
+      date.textContent=day.getDate();
+      cell.appendChild(date);
+
+      eventsOnDay(day).slice(0,3).forEach(ev=>{
+        const tag=document.createElement('div');
+        tag.className='ev';
+        tag.textContent=`${timeSpan(ev.start,ev.end,ev.allDay)} • ${ev.bookedBy}`;
+        tag.title=
+          `Date: ${ev.start.toLocaleDateString('en-GB')}\n`+
+          `Time: ${timeSpan(ev.start,ev.end,ev.allDay)}\n`+
+          `Booked by: ${ev.bookedBy}\n`+
+          `Subject: ${ev.title}`;
+        cell.appendChild(tag);
+      });
+
+      week.appendChild(cell);
+    }
+    grid.appendChild(week);
+  }
+}
+
+function eventsOnDay(day){
+  const s=new Date(day);s.setHours(0,0,0,0);
+  const e=new Date(day);e.setHours(23,59,59,999);
+  return allEvents.filter(ev=>!(ev.end<s||ev.start>e));
+}
+
+/* ===== Outlook Room ICS Parser ===== */
+function normalizeFromIcs(text){
+  const comp=new ICAL.Component(ICAL.parse(text));
+  const events=[];
+
+  comp.getAllSubcomponents('vevent').forEach(v=>{
+    const ev=new ICAL.Event(v);
+    let bookedBy='Unknown';
+
+    v.getAllProperties('attendee').forEach(a=>{
+      const cn=(a.getParameter('cn')||'').toLowerCase();
+      const mail=(a.getFirstValue()||'').toLowerCase();
+      if(!cn.includes('room') && !mail.includes('room') && bookedBy==='Unknown'){
+        bookedBy=a.getParameter('cn') || mail.replace('mailto:','');
+      }
+    });
+
+    const push=(s,e)=>events.push({
+      title:ev.summary||'Reserved',
+      start:new Date(s),
+      end:new Date(e),
+      allDay:ev.startDate.isDate,
+      bookedBy
+    });
+
+    if(ev.isRecurring()){
+      const it=ev.iterator();let next;
+      while((next=it.next())){
+        const s=next.toJSDate();
+        const e=new Date(s.getTime()+ev.duration.toSeconds()*1000);
+        push(s,e);
+      }
+    }else{
+      push(ev.startDate.toJSDate(),ev.endDate.toJSDate());
+    }
+  });
+  return events;
+}
+
+/* ===== Load ICS ===== */
+async function loadIcs(){
+  const res=await fetch(ICS_URL+'?t='+Date.now());
+  const text=await res.text();
+  allEvents=normalizeFromIcs(text);
+  renderMonth();
+  $('#updated').textContent='Updated '+new Date().toLocaleString('en-GB',{hour12:false});
+}
+
+/* ===== Excel Export ===== */
+function exportExcel(type){
+  const base=new Date(current);
+  const rows=allEvents.filter(ev=>{
+    const d=ev.start;
+    if(type==='day')return sameDay(d,new Date());
+    if(type==='month')return d.getMonth()===base.getMonth()&&d.getFullYear()===base.getFullYear();
+    if(type==='year')return d.getFullYear()===base.getFullYear();
+  }).map(ev=>({
+    Date:ev.start.toLocaleDateString('en-GB'),
+    Start:ev.allDay?'All day':ev.start.toLocaleTimeString('en-GB',{hour12:false}),
+    End:ev.allDay?'':ev.end.toLocaleTimeString('en-GB',{hour12:false}),
+    BookedBy:ev.bookedBy,
+    Subject:ev.title
+  }));
+
+  if(!rows.length){alert('No data');return;}
+
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Room Booking');
+  XLSX.writeFile(wb,`RoomBooking_${type}.xlsx`);
+}
+
+/* ===== Navigation ===== */
+$('#prev').onclick=()=>{current.setMonth(current.getMonth()-1);renderMonth();}
+$('#next').onclick=()=>{current.setMonth(current.getMonth()+1);renderMonth();}
+$('#today').onclick=()=>{
+  const n=new Date();
+  current=new Date(n.getFullYear(),n.getMonth(),1);
+  renderMonth();
+};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadIcs();
+  setInterval(loadIcs,60000);
+});
+</script>
+</body>
+</html>
