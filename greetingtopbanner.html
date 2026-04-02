@@ -9,26 +9,27 @@
     margin: 0;
     font-family: "Segoe UI", SegoeUI, -apple-system, BlinkMacSystemFont, sans-serif;
     background: transparent;
-    color: inherit;
+    color: #ffffff; /* 🔥 บังคับขาว */
   }
 
   .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 8px;
+    padding: 6px 12px;
   }
 
   .greeting {
-    font-size: 20px;
-    font-weight: 600;
-    color: inherit;
+    font-size: 28px;       /* 🔥 ใหญ่ขึ้น */
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
   }
 
   .date {
-    font-size: 13px;
-    color: inherit;
-    opacity: 0.7;
+    font-size: 14px;
+    color: #ffffff;
+    opacity: 0.85;
     white-space: nowrap;
   }
 </style>
@@ -44,14 +45,12 @@
 <script>
   const now = new Date();
 
-  // Greeting
   let greeting = "Good Morning";
   const hour = now.getHours();
 
   if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
   else if (hour >= 17) greeting = "Good Evening";
 
-  // Date
   const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const dayName = days[now.getDay()];
 
