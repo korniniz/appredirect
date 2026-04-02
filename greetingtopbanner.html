@@ -4,12 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- 🔥 บังคับ Light mode -->
+<meta name="color-scheme" content="light">
+
 <style>
-  body {
+  :root {
+    color-scheme: light;
+  }
+
+  html, body {
     margin: 0;
+    padding: 0;
+    background: transparent !important;
     font-family: "Segoe UI", SegoeUI, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: transparent;
-    color: #ffffff; /* 🔥 บังคับขาว */
+    color: #ffffff !important;
   }
 
   .container {
@@ -20,17 +28,25 @@
   }
 
   .greeting {
-    font-size: 28px;       /* 🔥 ใหญ่ขึ้น */
+    font-size: 30px;           /* 🔥 ใหญ่ */
     font-weight: 700;
-    color: #ffffff;
+    color: #ffffff !important;
     letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25); /* 🔥 อ่านง่าย */
   }
 
   .date {
     font-size: 14px;
-    color: #ffffff;
-    opacity: 0.85;
+    color: rgba(255,255,255,0.85) !important;
     white-space: nowrap;
+  }
+
+  /* 🔥 กัน Dark Mode override */
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: transparent !important;
+      color: #ffffff !important;
+    }
   }
 </style>
 </head>
@@ -45,12 +61,14 @@
 <script>
   const now = new Date();
 
+  // Greeting ตามเวลา
   let greeting = "Good Morning";
   const hour = now.getHours();
 
   if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
   else if (hour >= 17) greeting = "Good Evening";
 
+  // Day + Date
   const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const dayName = days[now.getDay()];
 
