@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,46 +16,44 @@
     padding: 10px;
   }
 
-  .tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
   }
 
-  .tab {
-    padding: 6px 10px;
-    cursor: pointer;
-    border-radius: 6px;
-    font-size: 13px;
-    background: rgba(255,255,255,0.1);
+  .card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .tab.active {
-    background: #0078d4;
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   }
 
-  .news-item {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-    align-items: center;
-  }
-
-  .news-item img {
-    width: 80px;
-    height: 55px;
+  .card img {
+    width: 100%;
+    height: 130px;
     object-fit: cover;
-    border-radius: 6px;
-    background: #333;
   }
 
-  .news-item a {
-    color: #ffffff;
+  .card-body {
+    padding: 8px;
+  }
+
+  .card-title {
     font-size: 13px;
+    line-height: 1.4;
+    color: #ffffff;
     text-decoration: none;
+    display: block;
   }
 
-  .news-item a:hover {
+  .card-title:hover {
     text-decoration: underline;
   }
 </style>
@@ -64,105 +62,43 @@
 <body>
 
 <div class="container">
-  <div class="tabs">
-    <div class="tab active" onclick="loadTab('thai')">🇹🇭 Thai</div>
-    <div class="tab" onclick="loadTab('world')">🌍 World</div>
-    <div class="tab" onclick="loadTab('business')">💼 Business</div>
-  </div>
-
-  <div id="news">Loading...</div>
+  <div id="news" class="grid">Loading...</div>
 </div>
 
 <script>
-  const feeds = {
-    thai: [
-      "https://www.thaipbs.or.th/rss/news.xml",
-      "https://www.thairath.co.th/rss/news"
-    ],
-    world: [
-      "https://feeds.bbci.co.uk/news/world/rss.xml"
-    ],
-    business: [
-      "https://feeds.bbci.co.uk/news/business/rss.xml"
-    ]
-  };
+  const feed = "https://feeds.bbci.co.uk/news/world/rss.xml";
+  const api = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed);
 
-  const proxies = [
-    "https://api.rss2json.com/v1/api.json?rss_url=",
-    "https://api.allorigins.win/get?url="
-  ];
+  async function loadNews() {
+    try {
+      const res = await fetch(api);
+      const data = await res.json();
 
-  async function fetchRSS(rssUrl) {
-    for (let proxy of proxies) {
-      try {
-        const res = await fetch(proxy + encodeURIComponent(rssUrl));
-        const data = await res.json();
+      let html = "";
 
-        if (data.items) return data.items;
+      data.items.slice(0, 6).forEach(item => {
+        const img = item.thumbnail || "https://via.placeholder.com/300x200?text=News";
 
-        if (data.contents) {
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(data.contents, "text/xml");
-          return [...xml.querySelectorAll("item")].map(x => ({
-            title: x.querySelector("title")?.textContent,
-            link: x.querySelector("link")?.textContent,
-            description: x.querySelector("description")?.textContent
-          }));
-        }
+        html += `
+          <div class="card">
+            <img src="${img}">
+            <div class="card-body">
+              <a href="${item.link}" target="_blank" class="card-title">
+                ${item.title}
+              </a>
+            </div>
+          </div>
+        `;
+      });
 
-      } catch (e) {}
+      document.getElementById("news").innerHTML = html;
+
+    } catch (err) {
+      document.getElementById("news").innerText = "Unable to load news";
     }
-    return [];
   }
 
-  async function loadTab(type) {
-    document.getElementById("news").innerText = "Loading...";
-
-    // เปลี่ยน active tab
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    event.target.classList.add("active");
-
-    let allItems = [];
-
-    // 🔥 Lazy load: โหลดเฉพาะ tab ที่กด
-    for (let url of feeds[type]) {
-      const items = await fetchRSS(url);
-      allItems = allItems.concat(items);
-    }
-
-    render(allItems.slice(0,6));
-  }
-
-  function render(items) {
-    let html = "";
-
-    items.forEach(item => {
-      let img = "";
-
-      if (item.thumbnail) img = item.thumbnail;
-
-      if (!img && item.description) {
-        const match = item.description.match(/<img.*?src="(.*?)"/);
-        if (match) img = match[1];
-      }
-
-      if (!img) {
-        img = "https://via.placeholder.com/80x55?text=News";
-      }
-
-      html += `
-        <div class="news-item">
-          <img src="${img}">
-          <a href="${item.link}" target="_blank">${item.title}</a>
-        </div>
-      `;
-    });
-
-    document.getElementById("news").innerHTML = html;
-  }
-
-  // โหลด default tab
-  loadTab('thai');
+  loadNews();
 </script>
 
 </body>
