@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: transparent;
+    color: #fff;
+  }
+
+  .news-container {
+    padding: 10px;
+  }
+
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .item {
+    font-size: 13px;
+    margin-bottom: 6px;
+    opacity: 0.9;
+  }
+
+  .item a {
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .item a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="news-container">
+  <div class="title">📰 Latest News</div>
+  <div id="news"></div>
+</div>
+
+<script>
+  const rssUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.thairath.co.th/rss/news");
+
+  fetch(rssUrl)
+    .then(res => res.json())
+    .then(data => {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(data.contents, "text/xml");
+
+      const items = xml.querySelectorAll("item");
+      let html = "";
+
+      items.forEach((item, i) => {
+        if (i >= 5) return;
+
+        const title = item.querySelector("title").textContent;
+        const link = item.querySelector("link").textContent;
+
+        html += `<div class="item">• <a href="${link}" target="_blank">${title}</a></div>`;
+      });
+
+      document.getElementById("news").innerHTML = html;
+    })
+    .catch(err => {
+      document.getElementById("news").innerText = "Unable to load news.";
+    });
+</script>
+
+</body>
+</html>
