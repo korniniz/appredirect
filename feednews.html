@@ -9,7 +9,7 @@
     margin: 0;
     font-family: "Segoe UI", sans-serif;
     background: transparent;
-    color: #fff;
+    color: #ffffff;
   }
 
   .news-container {
@@ -43,28 +43,23 @@
 
 <div class="news-container">
   <div class="title">📰 Latest News</div>
-  <div id="news"></div>
+  <div id="news">Loading...</div>
 </div>
 
 <script>
-  const rssUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.thairath.co.th/rss/news");
+  // 🔥 ใช้ RSS ที่เสถียร
+  const rssFeed = "https://feeds.bbci.co.uk/news/world/rss.xml";
 
-  fetch(rssUrl)
+  // 🔥 ใช้ proxy ที่เสถียรกว่า
+  const api = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssFeed);
+
+  fetch(api)
     .then(res => res.json())
     .then(data => {
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(data.contents, "text/xml");
-
-      const items = xml.querySelectorAll("item");
       let html = "";
 
-      items.forEach((item, i) => {
-        if (i >= 5) return;
-
-        const title = item.querySelector("title").textContent;
-        const link = item.querySelector("link").textContent;
-
-        html += `<div class="item">• <a href="${link}" target="_blank">${title}</a></div>`;
+      data.items.slice(0,5).forEach(item => {
+        html += `<div class="item">• <a href="${item.link}" target="_blank">${item.title}</a></div>`;
       });
 
       document.getElementById("news").innerHTML = html;
