@@ -45,34 +45,40 @@
     margin-top: 5px;
   }
 
-  /* 🔥 WEATHER PANEL (BIGGER) */
+  /* 🔥 WEATHER BLOCK FINAL */
   .weather {
     display: flex;
     align-items: center;
-    gap: 5px;
-   
-    padding: 10px 16px;
-    border-radius: 14px;
-
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(8px);
+    gap: 1px;
   }
 
+  /* ICON */
   .weather-icon {
     font-size: 45px;
     line-height: 1;
   }
 
+  /* 🔥 Divider */
+  .divider {
+    width: 1px;
+    height: 40px;
+    background: rgba(255,255,255,0.4);
+  }
+
+  /* TEXT RIGHT ALIGN */
   .weather-info {
     display: flex;
     flex-direction: column;
-    line-height: 1.2;
+    justify-content: center;
+    align-items: left;
+    text-align: left;
   }
 
   .temp {
     font-size: 20px;
     font-weight: 700;
     color: #ffffff;
+    letter-spacing: 0.3px;
   }
 
   .city {
@@ -99,6 +105,7 @@
 
   <div class="weather">
     <div class="weather-icon" id="icon">🌤️</div>
+    <div class="divider"></div>
     <div class="weather-info">
       <div class="temp" id="temp">--°C</div>
       <div class="city">Yannawa, Bangkok</div>
@@ -129,9 +136,9 @@
       const temp = data.current_weather.temperature;
       const code = data.current_weather.weathercode;
 
-      document.getElementById("temp").innerText = temp + "°C";
+      document.getElementById("temp").innerText = temp.toFixed(1) + "°C";
 
-      // Weather icon logic
+      // Icon logic
       let icon = "☀️";
       if (code >= 1 && code <= 3) icon = "🌤️";
       else if (code >= 45 && code <= 48) icon = "🌫️";
@@ -142,7 +149,7 @@
       document.getElementById("icon").innerText = icon;
     })
     .catch(() => {
-      document.getElementById("temp").innerText = "30°C";
+      document.getElementById("temp").innerText = "30.0°C";
     });
 </script>
 
