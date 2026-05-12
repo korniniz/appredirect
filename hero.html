@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- 🔥 กัน Dark mode override -->
 <meta name="color-scheme" content="light">
 
 <style>
@@ -16,7 +15,7 @@
     margin: 0;
     font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
     background: transparent !important;
-    color: #ffffff !important;
+    color: #ffffff;
   }
 
   .hero {
@@ -26,6 +25,7 @@
     padding: 12px 16px;
   }
 
+  /* LEFT SIDE */
   .left {
     display: flex;
     flex-direction: column;
@@ -34,39 +34,56 @@
   .greeting {
     font-size: 28px;
     font-weight: 600;
-    color: #ffffff !important;
+    color: #ffffff;
     letter-spacing: 0.2px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.25); /* 🔥 อ่านชัด */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
   }
 
   .date {
     font-size: 13px;
-    color: rgba(255,255,255,0.85) !important;
-    margin-top: 4px;
+    color: rgba(255,255,255,0.85);
+    margin-top: 5px;
   }
 
+  /* 🔥 WEATHER PANEL (BIGGER) */
   .weather {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
+   
+    padding: 10px 16px;
+    border-radius: 14px;
+
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+  }
+
+  .weather-icon {
+    font-size: 45px;
+    line-height: 1;
+  }
+
+  .weather-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
   }
 
   .temp {
-    font-size: 15px;
-    font-weight: 500;
-    color: #ffffff !important;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
   }
 
   .city {
     font-size: 12px;
-    color: rgba(255,255,255,0.75) !important;
+    color: rgba(255,255,255,0.75);
   }
 
-  /* 🔥 กัน dark mode แทรก */
   @media (prefers-color-scheme: dark) {
     body {
-      color: #ffffff !important;
       background: transparent !important;
+      color: #ffffff;
     }
   }
 </style>
@@ -81,10 +98,10 @@
   </div>
 
   <div class="weather">
-    <div>🌤️</div>
-    <div>
+    <div class="weather-icon" id="icon">🌤️</div>
+    <div class="weather-info">
       <div class="temp" id="temp">--°C</div>
-      <div class="city">Bangkok</div>
+      <div class="city">Yannawa, Bangkok</div>
     </div>
   </div>
 </div>
@@ -99,18 +116,30 @@
   if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
   else if (hour >= 17) greeting = "Good Evening";
 
+  document.getElementById("greeting").innerText = greeting;
+
   // Date
   const options = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-  const formattedDate = now.toLocaleDateString('en-GB', options);
+  document.getElementById("date").innerText = now.toLocaleDateString('en-GB', options);
 
-  document.getElementById("greeting").innerText = greeting;
-  document.getElementById("date").innerText = formattedDate;
-
-  // Weather (free API)
+  // Weather API
   fetch("https://api.open-meteo.com/v1/forecast?latitude=13.75&longitude=100.50&current_weather=true")
     .then(res => res.json())
     .then(data => {
-      document.getElementById("temp").innerText = data.current_weather.temperature + "°C";
+      const temp = data.current_weather.temperature;
+      const code = data.current_weather.weathercode;
+
+      document.getElementById("temp").innerText = temp + "°C";
+
+      // Weather icon logic
+      let icon = "☀️";
+      if (code >= 1 && code <= 3) icon = "🌤️";
+      else if (code >= 45 && code <= 48) icon = "🌫️";
+      else if (code >= 51 && code <= 67) icon = "🌧️";
+      else if (code >= 71 && code <= 77) icon = "❄️";
+      else if (code >= 80) icon = "⛈️";
+
+      document.getElementById("icon").innerText = icon;
     })
     .catch(() => {
       document.getElementById("temp").innerText = "30°C";
