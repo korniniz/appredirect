@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="color-scheme" content="light">
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+    background: transparent !important;
+    color: #ffffff;
+  }
+
+  .hero {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+  }
+
+  .greeting {
+    font-size: 28px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
+</style>
+</head>
+
+<body>
+
+<div class="hero">
+  <div class="greeting" id="greeting">Loading...</div>
+</div>
+
+<script>
+  const now = new Date();
+
+  // 🔥 ดึงชื่อ user จาก SharePoint (Query String)
+  const params = new URLSearchParams(window.location.search);
+  let user = params.get("user");
+
+  // กัน null + trim
+  if (user) {
+    user = user.trim();
+  }
+
+  // Greeting logic
+  let greeting = "Good Morning";
+  const hour = now.getHours();
+
+  if (hour >= 12 && hour < 17) {
+    greeting = "Good Afternoon";
+  } else if (hour >= 17) {
+    greeting = "Good Evening";
+  }
+
+  // 🔥 รวม Full Name (มี comma)
+  if (user) {
+    greeting += ", " + user;
+  }
+
+  document.getElementById("greeting").innerText = greeting;
+</script>
+
+</body>
+</html>
