@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Launching Microsoft Teams…</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Segoe UI", sans-serif;
+    background: #0b1220;
+    color: #fff;
+  }
+
+  .box {
+    text-align: center;
+    opacity: 0.9;
+  }
+
+  .sub {
+    font-size: 12px;
+    opacity: .65;
+    margin-top: 6px;
+  }
+
+  .countdown {
+    margin-top: 12px;
+    font-size: 13px;
+    opacity: .8;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <div>Opening Microsoft Teams...</div>
+
+  <div class="sub">
+    If nothing happens, Teams may not be installed or browser blocked it.
+  </div>
+
+  <div class="countdown">
+    Redirecting to Intranet in <span id="sec">5</span>s...
+  </div>
+</div>
+
+<script>
+
+  const intranetUrl = "https://ngowhock.sharepoint.com/sites/intranet";
+
+  function openTeams() {
+
+    const ua = navigator.userAgent.toLowerCase();
+
+    const isMac = ua.includes("mac");
+    const isWindows = ua.includes("win");
+
+    try {
+
+      if (isWindows || isMac) {
+
+        // Launch Microsoft Teams desktop app
+        window.location.href = "msteams://";
+
+      } else {
+
+        // Other OS fallback → Teams Web
+        window.location.href = "https://teams.microsoft.com";
+
+      }
+
+    } catch (e) {
+
+      console.log("Launch failed", e);
+
+    }
+
+    // Redirect to Intranet after 5 seconds
+    startRedirectCountdown();
+  }
+
+  function startRedirectCountdown() {
+
+    let seconds = 5;
+
+    const el = document.getElementById("sec");
+
+    const timer = setInterval(() => {
+
+      seconds--;
+
+      el.textContent = seconds;
+
+      if (seconds <= 0) {
+
+        clearInterval(timer);
+
+        window.location.href = intranetUrl;
+
+      }
+
+    }, 1000);
+  }
+
+  // Auto run
+  window.onload = function () {
+
+    openTeams();
+
+  };
+
+</script>
+
+</body>
+</html>
