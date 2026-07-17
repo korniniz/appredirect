@@ -3,13 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light">
 
 <style>
-:root{
-    color-scheme: light;
-}
-
 *{
     box-sizing:border-box;
 }
@@ -17,132 +12,111 @@
 body{
     margin:0;
     padding:16px;
-    font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif;
-    background:transparent !important;
+    font-family:"Segoe UI Variable","Segoe UI",sans-serif;
+    background:transparent;
 }
 
-/* APPLE WEATHER WIDGET */
+/* APPLE GLASS WIDGET */
 .hero{
     position:relative;
     display:flex;
     justify-content:space-between;
     align-items:center;
 
-    padding:18px 22px;
     min-height:120px;
+    padding:20px 24px;
 
-    background:linear-gradient(
-        135deg,
-        #6EC6FF 0%,
-        #4A90FF 25%,
-        #2D74F0 55%,
-        #1A56D6 80%,
-        #123D9B 100%
-    );
+    background:rgba(255,255,255,0.08);
 
-    border-radius:32px;
+    backdrop-filter:blur(25px);
+    -webkit-backdrop-filter:blur(25px);
 
     border:1px solid rgba(255,255,255,0.15);
 
-    box-shadow:
-        0 15px 40px rgba(0,0,0,0.18),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    border-radius:32px;
 
     overflow:hidden;
-
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
 }
 
-/* Glow Effect */
+/* BLUE GLOW */
 .hero::before{
+    content:"";
+    position:absolute;
+    inset:0;
+
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(120,200,255,.45),
+            transparent 45%
+        ),
+        radial-gradient(
+            circle at bottom right,
+            rgba(40,90,255,.35),
+            transparent 50%
+        );
+
+    z-index:0;
+}
+
+/* LIGHT SHINE */
+.hero::after{
     content:"";
     position:absolute;
 
     top:-120px;
     left:-100px;
 
-    width:260px;
-    height:260px;
+    width:320px;
+    height:320px;
 
     border-radius:50%;
 
-    background:rgba(255,255,255,0.22);
+    background:rgba(255,255,255,.12);
 
-    filter:blur(80px);
-}
+    filter:blur(70px);
 
-/* Cloud Light */
-.hero::after{
-    content:"";
-    position:absolute;
-
-    right:-90px;
-    top:-60px;
-
-    width:240px;
-    height:240px;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,0.12);
-
-    filter:blur(90px);
+    z-index:0;
 }
 
 .left,
 .weather{
     position:relative;
-    z-index:2;
-}
-
-/* LEFT */
-.left{
-    display:flex;
-    flex-direction:column;
+    z-index:1;
 }
 
 .greeting{
-    font-size:28px;
+    color:white;
+    font-size:32px;
     font-weight:600;
-    color:#fff;
-    letter-spacing:0.2px;
-    text-shadow:0 1px 3px rgba(0,0,0,0.18);
+    text-shadow:0 1px 3px rgba(0,0,0,.15);
 }
 
 .date{
-    font-size:13px;
-    color:rgba(255,255,255,0.88);
     margin-top:6px;
+    color:rgba(255,255,255,.85);
+    font-size:14px;
 }
 
-/* WEATHER */
 .weather{
     display:flex;
     align-items:center;
-    gap:8px;
+    gap:10px;
 }
 
 .weather-icon{
     font-size:48px;
-    line-height:1;
-}
-
-.weather-info{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
 }
 
 .temp{
+    color:white;
     font-size:22px;
     font-weight:700;
-    color:#fff;
 }
 
 .city{
+    color:rgba(255,255,255,.8);
     font-size:12px;
-    color:rgba(255,255,255,0.78);
 }
 </style>
 </head>
@@ -157,9 +131,9 @@ body{
     </div>
 
     <div class="weather">
-        <div class="weather-icon" id="icon">🌤️</div>
+        <div class="weather-icon" id="icon">☀️</div>
 
-        <div class="weather-info">
+        <div>
             <div class="temp" id="temp">--°C</div>
             <div class="city">Rama III, Bangkok</div>
         </div>
@@ -168,10 +142,9 @@ body{
 </div>
 
 <script>
-
-/* Greeting */
 const now = new Date();
 
+/* Greeting */
 let greeting = "Good Morning";
 
 if(now.getHours() >= 12 && now.getHours() < 17){
@@ -181,13 +154,13 @@ else if(now.getHours() >= 17){
     greeting = "Good Evening";
 }
 
-document.getElementById("greeting").innerText = greeting;
+document.getElementById("greeting").textContent = greeting;
 
 /* Date */
-document.getElementById("date").innerText =
+document.getElementById("date").textContent =
     now.toLocaleDateString("en-GB",{
         weekday:"long",
-        day:"2-digit",
+        day:"numeric",
         month:"long",
         year:"numeric"
     });
@@ -196,59 +169,35 @@ document.getElementById("date").innerText =
 fetch(
 "https://api.open-meteo.com/v1/forecast?latitude=13.695995306563452&longitude=100.53757141212388&current=temperature_2m,weather_code"
 )
-.then(response => response.json())
-.then(data => {
+.then(r=>r.json())
+.then(data=>{
 
-    const temp = data.current.temperature_2m;
-    const code = data.current.weather_code;
+    const temp=data.current.temperature_2m;
+    const code=data.current.weather_code;
 
-    document.getElementById("temp").innerText =
-        temp.toFixed(1) + "°C";
+    document.getElementById("temp").textContent=
+        temp.toFixed(1)+"°C";
 
-    let icon = "☀️";
+    let icon="☀️";
 
-    switch(true){
+    if(code>=1&&code<=3)
+        icon="🌤️";
+    else if(code>=45&&code<=48)
+        icon="🌫️";
+    else if(code>=51&&code<=67)
+        icon="🌧️";
+    else if(code>=71&&code<=77)
+        icon="❄️";
+    else if(code>=80&&code<=82)
+        icon="🌦️";
+    else if(code>=95)
+        icon="⛈️";
 
-        case (code === 0):
-            icon = "☀️";
-            break;
-
-        case (code >= 1 && code <= 3):
-            icon = "🌤️";
-            break;
-
-        case (code >= 45 && code <= 48):
-            icon = "🌫️";
-            break;
-
-        case (code >= 51 && code <= 67):
-            icon = "🌧️";
-            break;
-
-        case (code >= 71 && code <= 77):
-            icon = "❄️";
-            break;
-
-        case (code >= 80 && code <= 82):
-            icon = "🌦️";
-            break;
-
-        case (code >= 95):
-            icon = "⛈️";
-            break;
-    }
-
-    document.getElementById("icon").innerText = icon;
-
+    document.getElementById("icon").textContent=icon;
 })
-.catch(error => {
-
-    console.error(error);
-
-    document.getElementById("temp").innerText = "--°C";
-    document.getElementById("icon").innerText = "🌤️";
+.catch(()=>{
+    document.getElementById("temp").textContent="--°C";
 });
-
 </script>
 
 </body>
