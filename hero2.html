@@ -2,33 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-
-*{
-    box-sizing:border-box;
-}
-
 body{
     margin:0;
     padding:12px;
     font-family:"Segoe UI Variable","Segoe UI",sans-serif;
     background:transparent;
 }
-
-/* Common Card Style */
-
-.card{
-    background:#3E5F94;
-    border-radius:24px;
-    border:1px solid rgba(255,255,255,0.10);
-    margin-bottom:12px;
-}
-
-/* ===================================
-   Greeting Card
-=================================== */
 
 .hero{
     display:flex;
@@ -37,23 +18,21 @@ body{
 
     min-height:110px;
     padding:20px 24px;
-}
 
-.left{
-    display:flex;
-    flex-direction:column;
+    background:#3E5F94;
+
+    border-radius:20px;
 }
 
 .greeting{
-    color:#ffffff;
+    color:white;
     font-size:30px;
     font-weight:600;
-    line-height:1.1;
 }
 
 .date{
-    margin-top:8px;
-    color:rgba(255,255,255,0.85);
+    margin-top:6px;
+    color:rgba(255,255,255,.85);
     font-size:14px;
 }
 
@@ -64,62 +43,35 @@ body{
 }
 
 .weather-icon{
-    font-size:46px;
-}
-
-.weather-info{
-    display:flex;
-    flex-direction:column;
+    font-size:42px;
 }
 
 .temp{
-    color:#ffffff;
+    color:white;
     font-size:22px;
     font-weight:700;
 }
 
 .city{
-    color:rgba(255,255,255,0.75);
+    color:rgba(255,255,255,.75);
     font-size:12px;
 }
-
-/* ===================================
-   Section Header
-=================================== */
-
-.section{
-    display:flex;
-    align-items:center;
-
-    min-height:80px;
-    padding:20px 24px;
-}
-
-.section-title{
-    color:#ffffff;
-    font-size:24px;
-    font-weight:700;
-    letter-spacing:-0.3px;
-}
-
 </style>
 </head>
 
 <body>
 
-<!-- Greeting -->
+<div class="hero">
 
-<div class="card hero">
-
-    <div class="left">
+    <div>
         <div class="greeting" id="greeting"></div>
         <div class="date" id="date"></div>
     </div>
 
     <div class="weather">
-        <div class="weather-icon" id="icon">☀️</div>
+        <div class="weather-icon">☀️</div>
 
-        <div class="weather-info">
+        <div>
             <div class="temp" id="temp">--°C</div>
             <div class="city">Rama III, Bangkok</div>
         </div>
@@ -127,83 +79,32 @@ body{
 
 </div>
 
-<!-- Events -->
-
-<div class="card section">
-    <div class="section-title">
-        Events
-    </div>
-</div>
-
-<!-- Applications -->
-
-<div class="card section">
-    <div class="section-title">
-        Applications
-    </div>
-</div>
-
 <script>
 
-/* Greeting */
-
 const now = new Date();
-const hour = now.getHours();
 
 let greeting = "Good Morning";
 
-if(hour >= 12 && hour < 17){
+if(now.getHours() >= 12 && now.getHours() < 17)
     greeting = "Good Afternoon";
-}
-else if(hour >= 17){
+else if(now.getHours() >= 17)
     greeting = "Good Evening";
-}
 
 document.getElementById("greeting").textContent = greeting;
 
-/* Date */
-
 document.getElementById("date").textContent =
-    now.toLocaleDateString("en-GB",{
-        weekday:"long",
-        day:"numeric",
-        month:"long",
-        year:"numeric"
-    });
+now.toLocaleDateString("en-GB",{
+    weekday:"long",
+    day:"numeric",
+    month:"long",
+    year:"numeric"
+});
 
-/* Weather */
-
-fetch(
-"https://api.open-meteo.com/v1/forecast?latitude=13.695995306563452&longitude=100.53757141212388&current=temperature_2m,weather_code"
-)
-.then(response => response.json())
-.then(data => {
-
-    const temp = data.current.temperature_2m;
-    const code = data.current.weather_code;
-
+fetch("https://api.open-meteo.com/v1/forecast?latitude=13.695995306563452&longitude=100.53757141212388&current=temperature_2m")
+.then(r=>r.json())
+.then(data=>{
     document.getElementById("temp").textContent =
-        temp.toFixed(1) + "°C";
-
-    let icon = "☀️";
-
-    if(code >= 1 && code <= 3)
-        icon = "🌤️";
-    else if(code >= 45 && code <= 48)
-        icon = "🌫️";
-    else if(code >= 51 && code <= 67)
-        icon = "🌧️";
-    else if(code >= 71 && code <= 77)
-        icon = "❄️";
-    else if(code >= 80 && code <= 82)
-        icon = "🌦️";
-    else if(code >= 95)
-        icon = "⛈️";
-
-    document.getElementById("icon").textContent = icon;
-})
-.catch(() => {
-    document.getElementById("temp").textContent = "--°C";
+    data.current.temperature_2m.toFixed(1)+"°C";
 });
 
 </script>
