@@ -16,7 +16,7 @@ body{
     background:transparent;
 }
 
-/* APPLE GLASS WIDGET */
+/* NHC CORPORATE WIDGET */
 .hero{
     position:relative;
     display:flex;
@@ -26,19 +26,26 @@ body{
     min-height:120px;
     padding:20px 24px;
 
-    background:rgba(255,255,255,0.08);
+    background:linear-gradient(
+        135deg,
+        #6B86B5 0%,
+        #5574A7 25%,
+        #3E5F94 60%,
+        #2F4E82 100%
+    );
 
-    backdrop-filter:blur(25px);
-    -webkit-backdrop-filter:blur(25px);
+    border-radius:32px;
 
     border:1px solid rgba(255,255,255,0.15);
 
-    border-radius:32px;
+    box-shadow:
+        0 12px 30px rgba(62,95,148,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.18);
 
     overflow:hidden;
 }
 
-/* BLUE GLOW */
+/* LIGHT EFFECT */
 .hero::before{
     content:"";
     position:absolute;
@@ -47,19 +54,19 @@ body{
     background:
         radial-gradient(
             circle at top left,
-            rgba(120,200,255,.45),
+            rgba(180,210,255,.28),
             transparent 45%
         ),
         radial-gradient(
             circle at bottom right,
-            rgba(40,90,255,.35),
-            transparent 50%
+            rgba(62,95,148,.40),
+            transparent 55%
         );
 
     z-index:0;
 }
 
-/* LIGHT SHINE */
+/* APPLE STYLE SHINE */
 .hero::after{
     content:"";
     position:absolute;
@@ -72,7 +79,7 @@ body{
 
     border-radius:50%;
 
-    background:rgba(255,255,255,.12);
+    background:rgba(255,255,255,.10);
 
     filter:blur(70px);
 
@@ -85,19 +92,21 @@ body{
     z-index:1;
 }
 
+/* LEFT */
 .greeting{
-    color:white;
+    color:#ffffff;
     font-size:32px;
     font-weight:600;
-    text-shadow:0 1px 3px rgba(0,0,0,.15);
+    line-height:1.1;
 }
 
 .date{
-    margin-top:6px;
+    margin-top:8px;
     color:rgba(255,255,255,.85);
     font-size:14px;
 }
 
+/* WEATHER */
 .weather{
     display:flex;
     align-items:center;
@@ -105,17 +114,24 @@ body{
 }
 
 .weather-icon{
-    font-size:48px;
+    font-size:52px;
+    line-height:1;
+}
+
+.weather-info{
+    display:flex;
+    flex-direction:column;
 }
 
 .temp{
-    color:white;
+    color:#ffffff;
     font-size:22px;
     font-weight:700;
+    line-height:1.1;
 }
 
 .city{
-    color:rgba(255,255,255,.8);
+    color:rgba(255,255,255,.80);
     font-size:12px;
 }
 </style>
@@ -133,7 +149,7 @@ body{
     <div class="weather">
         <div class="weather-icon" id="icon">☀️</div>
 
-        <div>
+        <div class="weather-info">
             <div class="temp" id="temp">--°C</div>
             <div class="city">Rama III, Bangkok</div>
         </div>
@@ -142,6 +158,7 @@ body{
 </div>
 
 <script>
+
 const now = new Date();
 
 /* Greeting */
@@ -169,35 +186,36 @@ document.getElementById("date").textContent =
 fetch(
 "https://api.open-meteo.com/v1/forecast?latitude=13.695995306563452&longitude=100.53757141212388&current=temperature_2m,weather_code"
 )
-.then(r=>r.json())
-.then(data=>{
+.then(response => response.json())
+.then(data => {
 
-    const temp=data.current.temperature_2m;
-    const code=data.current.weather_code;
+    const temp = data.current.temperature_2m;
+    const code = data.current.weather_code;
 
-    document.getElementById("temp").textContent=
-        temp.toFixed(1)+"°C";
+    document.getElementById("temp").textContent =
+        temp.toFixed(1) + "°C";
 
-    let icon="☀️";
+    let icon = "☀️";
 
-    if(code>=1&&code<=3)
-        icon="🌤️";
-    else if(code>=45&&code<=48)
-        icon="🌫️";
-    else if(code>=51&&code<=67)
-        icon="🌧️";
-    else if(code>=71&&code<=77)
-        icon="❄️";
-    else if(code>=80&&code<=82)
-        icon="🌦️";
-    else if(code>=95)
-        icon="⛈️";
+    if(code >= 1 && code <= 3)
+        icon = "🌤️";
+    else if(code >= 45 && code <= 48)
+        icon = "🌫️";
+    else if(code >= 51 && code <= 67)
+        icon = "🌧️";
+    else if(code >= 71 && code <= 77)
+        icon = "❄️";
+    else if(code >= 80 && code <= 82)
+        icon = "🌦️";
+    else if(code >= 95)
+        icon = "⛈️";
 
-    document.getElementById("icon").textContent=icon;
+    document.getElementById("icon").textContent = icon;
 })
-.catch(()=>{
-    document.getElementById("temp").textContent="--°C";
+.catch(() => {
+    document.getElementById("temp").textContent = "--°C";
 });
+
 </script>
 
 </body>
