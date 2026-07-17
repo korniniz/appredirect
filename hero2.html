@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+
+<style>
+:root{
+    color-scheme: light;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    padding:16px;
+    font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif;
+    background:transparent !important;
+}
+
+/* APPLE WEATHER WIDGET */
+.hero{
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:18px 22px;
+    min-height:120px;
+
+    background:linear-gradient(
+        135deg,
+        #6EC6FF 0%,
+        #4A90FF 25%,
+        #2D74F0 55%,
+        #1A56D6 80%,
+        #123D9B 100%
+    );
+
+    border-radius:32px;
+
+    border:1px solid rgba(255,255,255,0.15);
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.25);
+
+    overflow:hidden;
+
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+}
+
+/* Glow Effect */
+.hero::before{
+    content:"";
+    position:absolute;
+
+    top:-120px;
+    left:-100px;
+
+    width:260px;
+    height:260px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,0.22);
+
+    filter:blur(80px);
+}
+
+/* Cloud Light */
+.hero::after{
+    content:"";
+    position:absolute;
+
+    right:-90px;
+    top:-60px;
+
+    width:240px;
+    height:240px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,0.12);
+
+    filter:blur(90px);
+}
+
+.left,
+.weather{
+    position:relative;
+    z-index:2;
+}
+
+/* LEFT */
+.left{
+    display:flex;
+    flex-direction:column;
+}
+
+.greeting{
+    font-size:28px;
+    font-weight:600;
+    color:#fff;
+    letter-spacing:0.2px;
+    text-shadow:0 1px 3px rgba(0,0,0,0.18);
+}
+
+.date{
+    font-size:13px;
+    color:rgba(255,255,255,0.88);
+    margin-top:6px;
+}
+
+/* WEATHER */
+.weather{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.weather-icon{
+    font-size:48px;
+    line-height:1;
+}
+
+.weather-info{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.temp{
+    font-size:22px;
+    font-weight:700;
+    color:#fff;
+}
+
+.city{
+    font-size:12px;
+    color:rgba(255,255,255,0.78);
+}
+</style>
+</head>
+
+<body>
+
+<div class="hero">
+
+    <div class="left">
+        <div class="greeting" id="greeting"></div>
+        <div class="date" id="date"></div>
+    </div>
+
+    <div class="weather">
+        <div class="weather-icon" id="icon">🌤️</div>
+
+        <div class="weather-info">
+            <div class="temp" id="temp">--°C</div>
+            <div class="city">Rama III, Bangkok</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+/* Greeting */
+const now = new Date();
+
+let greeting = "Good Morning";
+
+if(now.getHours() >= 12 && now.getHours() < 17){
+    greeting = "Good Afternoon";
+}
+else if(now.getHours() >= 17){
+    greeting = "Good Evening";
+}
+
+document.getElementById("greeting").innerText = greeting;
+
+/* Date */
+document.getElementById("date").innerText =
+    now.toLocaleDateString("en-GB",{
+        weekday:"long",
+        day:"2-digit",
+        month:"long",
+        year:"numeric"
+    });
+
+/* Weather */
+fetch(
+"https://api.open-meteo.com/v1/forecast?latitude=13.695995306563452&longitude=100.53757141212388&current=temperature_2m,weather_code"
+)
+.then(response => response.json())
+.then(data => {
+
+    const temp = data.current.temperature_2m;
+    const code = data.current.weather_code;
+
+    document.getElementById("temp").innerText =
+        temp.toFixed(1) + "°C";
+
+    let icon = "☀️";
+
+    switch(true){
+
+        case (code === 0):
+            icon = "☀️";
+            break;
+
+        case (code >= 1 && code <= 3):
+            icon = "🌤️";
+            break;
+
+        case (code >= 45 && code <= 48):
+            icon = "🌫️";
+            break;
+
+        case (code >= 51 && code <= 67):
+            icon = "🌧️";
+            break;
+
+        case (code >= 71 && code <= 77):
+            icon = "❄️";
+            break;
+
+        case (code >= 80 && code <= 82):
+            icon = "🌦️";
+            break;
+
+        case (code >= 95):
+            icon = "⛈️";
+            break;
+    }
+
+    document.getElementById("icon").innerText = icon;
+
+})
+.catch(error => {
+
+    console.error(error);
+
+    document.getElementById("temp").innerText = "--°C";
+    document.getElementById("icon").innerText = "🌤️";
+});
+
+</script>
+
+</body>
+</html>
