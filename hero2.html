@@ -11,102 +11,49 @@
 
 body{
     margin:0;
-    padding:16px;
+    padding:12px;
     font-family:"Segoe UI Variable","Segoe UI",sans-serif;
     background:transparent;
 }
 
-/* NHC CORPORATE WIDGET */
+/* NHC SharePoint Widget */
 .hero{
-    position:relative;
     display:flex;
     justify-content:space-between;
     align-items:center;
 
-    min-height:120px;
+    min-height:110px;
     padding:20px 24px;
 
-    background:linear-gradient(
-        135deg,
-        #6B86B5 0%,
-        #5574A7 25%,
-        #3E5F94 60%,
-        #2F4E82 100%
-    );
+    background:#3E5F94;
 
-    border-radius:32px;
+    border-radius:24px;
 
-    border:1px solid rgba(255,255,255,0.15);
-
-    box-shadow:
-        0 12px 30px rgba(62,95,148,0.25),
-        inset 0 1px 0 rgba(255,255,255,0.18);
+    border:1px solid rgba(255,255,255,0.10);
 
     overflow:hidden;
 }
 
-/* LIGHT EFFECT */
-.hero::before{
-    content:"";
-    position:absolute;
-    inset:0;
-
-    background:
-        radial-gradient(
-            circle at top left,
-            rgba(180,210,255,.28),
-            transparent 45%
-        ),
-        radial-gradient(
-            circle at bottom right,
-            rgba(62,95,148,.40),
-            transparent 55%
-        );
-
-    z-index:0;
+.left{
+    display:flex;
+    flex-direction:column;
 }
 
-/* APPLE STYLE SHINE */
-.hero::after{
-    content:"";
-    position:absolute;
-
-    top:-120px;
-    left:-100px;
-
-    width:320px;
-    height:320px;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,.10);
-
-    filter:blur(70px);
-
-    z-index:0;
-}
-
-.left,
-.weather{
-    position:relative;
-    z-index:1;
-}
-
-/* LEFT */
 .greeting{
     color:#ffffff;
-    font-size:32px;
+    font-size:30px;
     font-weight:600;
     line-height:1.1;
+    letter-spacing:-0.3px;
 }
 
 .date{
     margin-top:8px;
-    color:rgba(255,255,255,.85);
+    color:rgba(255,255,255,0.85);
     font-size:14px;
+    font-weight:400;
 }
 
-/* WEATHER */
 .weather{
     display:flex;
     align-items:center;
@@ -114,13 +61,14 @@ body{
 }
 
 .weather-icon{
-    font-size:52px;
+    font-size:46px;
     line-height:1;
 }
 
 .weather-info{
     display:flex;
     flex-direction:column;
+    align-items:flex-start;
 }
 
 .temp{
@@ -131,8 +79,28 @@ body{
 }
 
 .city{
-    color:rgba(255,255,255,.80);
+    color:rgba(255,255,255,0.75);
     font-size:12px;
+}
+
+/* Mobile */
+@media (max-width: 768px){
+    .hero{
+        padding:18px;
+        min-height:100px;
+    }
+
+    .greeting{
+        font-size:24px;
+    }
+
+    .weather-icon{
+        font-size:40px;
+    }
+
+    .temp{
+        font-size:18px;
+    }
 }
 </style>
 </head>
@@ -159,15 +127,16 @@ body{
 
 <script>
 
-const now = new Date();
-
 /* Greeting */
+const now = new Date();
+const hour = now.getHours();
+
 let greeting = "Good Morning";
 
-if(now.getHours() >= 12 && now.getHours() < 17){
+if(hour >= 12 && hour < 17){
     greeting = "Good Afternoon";
 }
-else if(now.getHours() >= 17){
+else if(hour >= 17){
     greeting = "Good Evening";
 }
 
@@ -175,11 +144,11 @@ document.getElementById("greeting").textContent = greeting;
 
 /* Date */
 document.getElementById("date").textContent =
-    now.toLocaleDateString("en-GB",{
-        weekday:"long",
-        day:"numeric",
-        month:"long",
-        year:"numeric"
+    now.toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
     });
 
 /* Weather */
